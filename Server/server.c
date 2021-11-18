@@ -8,59 +8,18 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include "threadQueue.h"
+#include "threadQueue.c"
+
 #define MAX 1024
 #define PORT 8082
 #define SA struct sockaddr
 #define Server_handle 100
-#define thread_handling 10
+#define thread_handling 2
 
 pthread_t sourceOfThread[thread_handling];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
 pthread_cond_t condition_check = PTHREAD_COND_INITIALIZER;
-
-struct Node {
-	int* confd;
-	struct Node* next;
-	
-};
-typedef struct Node nodex;
-nodex* head = NULL;
-nodex* current = NULL;
-// Thêm vào link list
-void enqueue(int* confd){
-	nodex *new = malloc(sizeof(nodex));
-	new->confd = confd;
-	new->next = NULL;
-	if (current == NULL)
-	{
-		/* code */
-		head = new;
-	} else {
-		current->next = new;
-	}
-	current = new;
-}
-// Xóa khỏi link list
-// Check if NULL
-// Return socket
-int* dequeue() {
-	if (head == NULL)
-	{
-		/* code */
-		return NULL;
-	}
-	int* check = head->confd;
-	nodex *temp = head;
-	head = head->next;
-	if (head == NULL)
-	{
-		/* code */
-		current = NULL;
-	}
-	free(temp);
-	return check;
-}
-
 
 
 void  *commute(void * client){

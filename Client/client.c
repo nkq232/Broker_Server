@@ -80,11 +80,8 @@ void commute(int sockfd)
     }
 }
    
-int main()
+int main(int argc, char* args[])
 {
-    printf("Enter server address: \n");
-    char writeBuffer[MAX];
-    scanf("%[^\n]%*c", writeBuffer);
     int sockfd, confd;
     struct sockaddr_in serveras, cli;
     
@@ -99,7 +96,7 @@ int main()
    
     serveras.sin_family = AF_INET;
     serveras.sin_port = htons(PORT);
-    if (inet_pton(serveras.sin_family, writeBuffer, &serveras.sin_addr) < 0) {
+    if (inet_pton(serveras.sin_family, args[1], &serveras.sin_addr) < 0) {
         perror("error set server address");
         return 1;
     } 
