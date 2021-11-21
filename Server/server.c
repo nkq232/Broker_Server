@@ -214,3 +214,59 @@ int main(){
 
 
 
+
+//Dung cho client, tham so dang de trong
+void checkUsername(char *username);
+void checkAccount(char *username, char *password);
+void registerInfo(char *username, short locationID, short sensorIDList[]);
+
+void getInfoImmediately(char* fileName, char *type, short locationID);
+void getInfoByDay(char* fileName, char *type, short locationID, char *start, char *end);
+void getInfoByMonth(char* fileName, char *type, short localocationIDtion, char *start, char *end);
+void getInfoByYear(char* fileName, char *type, short locationID, char *start, char *end);
+
+//Dung cho sensor, tham so dang de trong
+void setInfo(char *type, short locationID, char *timeType, float value);
+
+
+void communicateWithClient(void * client);
+void communicateWithSensor(void * sensor);
+void communicate(void * client) {
+	int confd = int confd = ((int)client);
+	free(client);
+	char readBuffer[MAX], writeBuffer[MAX];
+	int n;
+	int check_read;
+	short isClient = 0;
+	short isSensor = 0;
+	while (1) {
+		bzero(readBuffer, MAX);
+		read(confd, readBuffer, sizeof(readBuffer));
+		printf("Recieving Message: %s\n" ,readBuffer);
+		if(strncmp(readBuffer, "CLIENT HELO Broker") == 0) {
+			isClient = 1;
+			write(confd, "200 Hello Client", strlen("200 Hello Client"));
+			printf("Sending to client: 200 Hello Client\n");
+			continue;
+		}
+		if(strncmp(readBuffer, "SENSOR HELO Broker") == 0) {
+			isSensor = 1;
+			write(confd, "500 Hello Sensor", strlen("500 Hello Sensor"));
+			printf("Sending to client: 500 Hello Sensor\n");
+			continue;
+		}
+		if (strncmp(readBuffer, "QUIT", 4) == 0)
+		{
+			write(confd, "500 bye", sizeof("500 bye"));
+			printf("Sending to client: 500 bye\n");
+			break;
+		}
+		if (isClient) {
+			//Xu ly giao thuc client
+
+		}
+		if (isSensor) {
+			// Xy ly giao thuc sensor
+		}
+	}
+}
