@@ -22,99 +22,50 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t condition_check = PTHREAD_COND_INITIALIZER;
 
 
-void  *commute(void * client){
+void  *communicate(void * client){
 	int confd = *((int*)client);
 	free(client);
 
 	char readBuffer[MAX], writeBuffer[MAX];
 	int n;
 	int check_read;
-	while(1){
+	short isClient = 0;
+	short isSensor = 0;
+	while (1) {
 		bzero(readBuffer, MAX);
 		read(confd, readBuffer, sizeof(readBuffer));
-		printf("From Client: %s\n" ,readBuffer);
-		if (strncmp(readBuffer, "HELO Server", 11) == 0)
-		{
-			/* code */
+		printf("Recieving Message: %s\n" ,readBuffer);
+		if(strncmp(readBuffer, "CLIENT HELO Broker", 18) == 0) {
+			isClient = 1;
 			write(confd, "200 Hello Client", strlen("200 Hello Client"));
 			printf("Sending to client: 200 Hello Client\n");
 		}
+		else if(strncmp(readBuffer, "SENSOR HELO Broker", 18) == 0) {
+			isSensor = 1;
+			write(confd, "500 Hello Sensor", strlen("500 Hello Sensor"));
+			printf("Sending to client: 500 Hello Sensor\n");
+		}
 		else if (strncmp(readBuffer, "QUIT", 4) == 0)
 		{
-			/* code */
 			write(confd, "500 bye", sizeof("500 bye"));
 			printf("Sending to client: 500 bye\n");
 			break;
 		}
-		else if (strncmp(readBuffer, "DOWNLOAD", 8) == 0)
+		else 
 		{
-			/* code */
-			printf("Sending to client: 300 Download File OK\n");
-			write(confd, "300 Download File OK", strlen("300 Download File OK"));
-			
-			bzero(readBuffer, MAX);
-			read(confd, readBuffer, sizeof(readBuffer));
-			printf("From Client: %s\n" ,readBuffer);
+			write(confd, "Syntax Error", sizeof("Syntax Error"));
+			printf("Error Input\n");
+		}
+		if (isClient) {
+			//Xu ly giao thuc client
+			free(isClient);
+			free(isSensor);
 
-			FILE *file;
-			file = fopen(readBuffer, "rb");
-			if (file == NULL)
-			{
-				/* code */
-				printf("Sending to client: 305 File Not Exists\n");
-				write(confd, "305 File Not Exists", strlen("305 File Not Exists"));
-			} else {
-				strcpy(readBuffer, "310 File Found");
-				printf("Sending to client: %s\n", readBuffer);
-				write(confd, readBuffer, strlen(readBuffer));
-				
-				bzero(readBuffer, MAX);
-				check_read = read(confd, readBuffer, sizeof(readBuffer));
-				if (check_read <= 0)
-				{
-					/* code */
-					perror("Read error");
-					continue;
-				}
-				readBuffer[check_read] = '\0';
-
-				fseek(file, 0, SEEK_END);
-				int size = ftell(file); 
-				fseek(file, 0, SEEK_SET);
-
-				printf("Sending to client: File size: %d bytes \n", size);
-				snprintf(writeBuffer, sizeof(writeBuffer), "File size: %d bytes", size); 
-				write(confd, writeBuffer, strlen(writeBuffer));
-
-				size_t a;
-				while(1) {
-					check_read = read(confd, readBuffer, sizeof(readBuffer));
-					if (check_read <= 0)
-					{
-						/* code */
-						perror("Read error");
-						break;
-					}
-					readBuffer[check_read] = '\0';
-					if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
-					{
-						/* code */
-						writeBuffer[a] = '\0';
-						write(confd, writeBuffer,a);
-					} else {
-						strcpy(writeBuffer, "320 End File");
-						write(confd, writeBuffer, strlen(writeBuffer));
-						break;
-					}
-				}
-				fclose(file);
-				file = NULL;
-			}
-			
-		}   else {
-				bzero(writeBuffer, MAX);
-				strcpy(writeBuffer, "400 Wrong Syntax");
-				write(confd, writeBuffer, strlen(writeBuffer));
+		}
+		if (isSensor) {
+			// Xy ly giao thuc sensor
+			free(isSensor);
+			free(isClient);
 		}
 	}
 	return NULL;
@@ -136,7 +87,7 @@ void* handlingFunction(void* args) {
 		if (client != NULL)
 		{
 			/* code */
-			commute(client);
+			communicate(client);
 		}
 	}
 };
@@ -200,7 +151,7 @@ int main(){
 		int *client = malloc(sizeof(int));
 		*client = confd;
 		// pthread_t t;
-		// pthread_create(&t, NULL, commute, client);
+		// pthread_create(&t, NULL, communicate, client);
 		pthread_mutex_lock(&mutex);
 		enqueue(client);
 		pthread_cond_signal(&condition_check); 
@@ -231,42 +182,3 @@ void setInfo(char *type, short locationID, char *timeType, float value);
 
 void communicateWithClient(void * client);
 void communicateWithSensor(void * sensor);
-void communicate(void * client) {
-	int confd = int confd = ((int)client);
-	free(client);
-	char readBuffer[MAX], writeBuffer[MAX];
-	int n;
-	int check_read;
-	short isClient = 0;
-	short isSensor = 0;
-	while (1) {
-		bzero(readBuffer, MAX);
-		read(confd, readBuffer, sizeof(readBuffer));
-		printf("Recieving Message: %s\n" ,readBuffer);
-		if(strncmp(readBuffer, "CLIENT HELO Broker") == 0) {
-			isClient = 1;
-			write(confd, "200 Hello Client", strlen("200 Hello Client"));
-			printf("Sending to client: 200 Hello Client\n");
-			continue;
-		}
-		if(strncmp(readBuffer, "SENSOR HELO Broker") == 0) {
-			isSensor = 1;
-			write(confd, "500 Hello Sensor", strlen("500 Hello Sensor"));
-			printf("Sending to client: 500 Hello Sensor\n");
-			continue;
-		}
-		if (strncmp(readBuffer, "QUIT", 4) == 0)
-		{
-			write(confd, "500 bye", sizeof("500 bye"));
-			printf("Sending to client: 500 bye\n");
-			break;
-		}
-		if (isClient) {
-			//Xu ly giao thuc client
-
-		}
-		if (isSensor) {
-			// Xy ly giao thuc sensor
-		}
-	}
-}
