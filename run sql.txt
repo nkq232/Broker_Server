@@ -1,0 +1,3 @@
+Chay Server:
+sudo apachectl stop
+gcc -o test sqltest.c `mysql_config --cflags --libs`

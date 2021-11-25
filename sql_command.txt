@@ -1,4 +1,24 @@
-Why it doesn't push this??
-Chay Server:
-sudo apachectl stop
-gcc -o test sqltest.c `mysql_config --cflags --libs`
+/* Tim kiem user da ton tai chua */
+SELECT * FROM user u WHERE u.UserName = 'Thach';
+
+/* Dang ky user */
+INSERT INTO `user` (`UserId`, `UserName`, `Password`) VALUES (NULL, 'usertest', 'passwordtest');
+
+/* Kiem tra dang nhap */
+SELECT * FROM user u WHERE u.UserName = 'Thach' AND u.Password = 'Thach123456';
+
+/* Dang ky dia diem, sensor */
+INSERT INTO `register` (`RegisterId`, `UserId`, `LocationId`, `TypeId`) VALUES (NULL, '5', '24', '1');
+/* Lay dia diem, sensor da dang ky */
+SELECT * FROM `register` r 
+WHERE r.UserId = '1';
+
+/* Lay location */
+SELECT * FROM `location`
+
+/* Lay sensor cua location trong data*/
+SELECT t.*
+FROM data d JOIN type t ON d.TypeId = t.TypeId
+WHERE d.LocationId = '24'
+GROUP BY d.TypeId
+
