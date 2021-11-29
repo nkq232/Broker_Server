@@ -31,6 +31,7 @@ void  *communicate(void * client){
 	int check_read;
 	short isClient = 0;
 	short isSensor = 0;
+	int escape = 0;
 	while (1) {
 		bzero(readBuffer, MAX);
 		read(confd, readBuffer, sizeof(readBuffer));
@@ -45,12 +46,6 @@ void  *communicate(void * client){
 			write(confd, "500 Hello Sensor", strlen("500 Hello Sensor"));
 			printf("Sending to client: 500 Hello Sensor\n");
 		}
-		else if (strncmp(readBuffer, "QUIT", 4) == 0)
-		{
-			write(confd, "500 bye", sizeof("500 bye"));
-			printf("Sending to client: 500 bye\n");
-			break;
-		}
 		else 
 		{
 			write(confd, "Syntax Error", sizeof("Syntax Error"));
@@ -59,13 +54,94 @@ void  *communicate(void * client){
 		if (isClient) {
 			//Xu ly giao thuc client
 			free(isClient);
-			free(isSensor);
+			escape = 1;
 
 		}
 		if (isSensor) {
 			// Xy ly giao thuc sensor
 			free(isSensor);
-			free(isClient);
+			read(confd, readBuffer, sizeof(readBuffer));
+			printf("Recieving Message From Sensor: %s\n" ,readBuffer);
+			write(confd, "501 Info OK", strlen("501 Info OK"));
+			printf("Sending to Sensor: 501 Info OK\n");
+			bzero(readBuffer, MAX);
+			read(confd, readBuffer, sizeof(readBuffer));
+			int check1 = 0, check2 = 0, check3 = 0, check4 = 0;
+			int for1 = 0, for2 = 0, for3 = 0, for4 = 0, for_stop = 0;
+			for (int i = 0; i < strlen(readBuffer); ++i)
+			{
+				/* code */
+				if (readBuffer[i] == 'I' && readBuffer[i+1] == 'D' && for1 == 0)
+				{
+					/* code */
+					check1 = i;
+					for1 = 1;
+				}
+				if (readBuffer[i] == 'T' && for2 == 0)
+				{
+					/* code */
+					check2 = i;
+					for2 = 1;
+				}
+				if (readBuffer[i] == 'L' && readBuffer[i+1] == 'o' && readBuffer[i+2] == 'c' && readBuffer[i+3] == 'a' && for3 == 0)
+				{
+					/* code */
+					check3 = i;
+					for3 = 1;
+				}
+				if (readBuffer[i] == 'V' && readBuffer[i+1] == 'a' && readBuffer[i+2] == 'l' && readBuffer[i+3] == 'u' && for4 == 0)
+				{
+					/* code */
+					check4 = i;
+					for4 = 1;
+				}
+
+			}
+			char id[50], type[50], locationID[50], value[50];
+			for (int i = 0; i < strlen(readBuffer); ++i)
+			{
+				/* code */
+				if (i >= check1 && i < (check2 - 2))
+				{
+					/* code */
+					strcat(id, readBuffer[i]);
+				}
+				if (i >= check2 && i < (check3 - 2))
+				{
+					/* code */
+					strcat(type, readBuffer[i]);
+				}
+				if (i >= check3 && i < (check4 - 2))
+				{
+					/* code */
+					strcat(locationID, readBuffer[i]);
+				}
+				if (i >= check4)
+				{
+					/* code */
+					if (readBuffer[i] == '\n')
+					{
+						/* code */
+						for_stop = 1;
+
+					}
+					if (for_stop)
+					{
+						/* code */
+						break;
+					}
+					strcat(value, readBuffer[i]);
+				}
+
+			}
+			setInfo(id, type, locationID, value);
+			escape = 1;
+
+		}
+		if (escape)
+		{
+			/* code */
+			break;
 		}
 	}
 	return NULL;
@@ -177,7 +253,7 @@ void getInfoByMonth(char* fileName, char *type, short localocationIDtion, char *
 void getInfoByYear(char* fileName, char *type, short locationID, char *start, char *end);
 
 //Dung cho sensor, tham so dang de trong
-void setInfo(char *type, short locationID, char *timeType, float value);
+void setInfo(char * ID, char* type, char * locationID, char* value);
 
 
 void communicateWithClient(void * client);
