@@ -2,8 +2,8 @@
 Big Task
 
 
-Clone về:
-git clone https://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@github.com/nkq232/Broker_Server.git
+Update token:
+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
 
 Chạy Client:
 
