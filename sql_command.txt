@@ -9,9 +9,14 @@ SELECT * FROM user u WHERE u.UserName = 'Thach' AND u.Password = 'Thach123456';
 
 /* Dang ky dia diem, sensor */
 INSERT INTO `register` (`RegisterId`, `UserId`, `LocationId`, `TypeId`) VALUES (NULL, '5', '24', '1');
+
+/* Xoa dia diem da dang ky */
+DELETE FROM register WHERE UserId = 1 AND LocationId = 15 AND TypeId = 3;
+
 /* Lay dia diem, sensor da dang ky */
-SELECT * FROM `register` r 
-WHERE r.UserId = '1';
+SELECT t.*
+FROM `register` r JOIN `type` t ON r.TypeId = t.TypeId 
+WHERE r.UserId = '1' AND r.LocationId = '15';
 
 /* Lay location */
 SELECT * FROM `location`
@@ -21,4 +26,26 @@ SELECT t.*
 FROM data d JOIN type t ON d.TypeId = t.TypeId
 WHERE d.LocationId = '24'
 GROUP BY d.TypeId
+
+/* Lay data theo ngay 7h-23h) */
+SELECT HOUR(d.Time) AS Hour, d.Value AS Value
+FROM `data` d
+WHERE d.LocationId = '15' AND d.TypeId = '3' AND Date(d.Time) = Date('2021-11-01');
+
+/* Lay data theo thang (1-30, 1-31, 1-28)*/
+SELECT DAY(d.Time) AS Day, AVG(d.Value) AS Value
+FROM `data` d
+WHERE d.LocationId = '15' AND d.TypeId = '3' AND YEAR(d.Time) = YEAR('2021-11-01') AND MONTH(d.Time) = MONTH('2021-11-01')
+GROUP BY Day;
+
+/* Lay data theo nam (1-12)*/
+SELECT MONTH(d.Time) AS Month, AVG(d.Value) AS Value
+FROM `data` d
+WHERE d.LocationId = '15' AND d.TypeId = '3' AND YEAR(d.Time) = YEAR('2021-9-01')
+GROUP BY Month;
+
+-----------------------------
+
+/* Insert du lieu tu sensor */
+INSERT INTO `data` (`DataId`, `LocationId`, `TypeId`, `Value`, `Time`) VALUES (NULL, '1', '1', '36.5', current_timestamp());
 
