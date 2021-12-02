@@ -23,8 +23,8 @@ SELECT * FROM `location`
 
 /* Lay sensor cua location trong data*/
 SELECT t.*
-FROM data d JOIN type t ON d.TypeId = t.TypeId
-WHERE d.LocationId = '24'
+FROM Data d JOIN Type t ON d.TypeId = t.TypeId
+WHERE d.LocationId = '21'
 GROUP BY d.TypeId
 
 /* Lay data theo ngay 7h-23h) */

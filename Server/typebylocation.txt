@@ -1,0 +1,10 @@
+[
+{"TypeID": 1, "TypeName": "Temperature", "TypeValue": "°C"},
+{"TypeID": 2, "TypeName": "Humidity", "TypeValue": "%"},
+{"TypeID": 3, "TypeName": "Amount of rain", "TypeValue": "mm/12h"},
+{"TypeID": 4, "TypeName": "Foresight", "TypeValue": "m"},
+{"TypeID": 5, "TypeName": "Wind", "TypeValue": "km/h"},
+{"TypeID": 6, "TypeName": "Cloud cover", "TypeValue": "Okta"},
+{"TypeID": 7, "TypeName": "Possibility Of Rain", "TypeValue": "%"},
+{"TypeID": 8, "TypeName": "Lightning", "TypeValue": "%"}
+]

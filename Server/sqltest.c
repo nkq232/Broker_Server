@@ -1,47 +1,23 @@
 #include <mysql.h>
 #include <stdio.h>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <pthread.h>
-#include "threadQueue.h"
-#include "threadQueue.c"
 
-#define MAX 1024
-#define PORT 8082
-#define SA struct sockaddr
-#define Server_handle 100
-#define thread_handling 2
 
-pthread_t sourceOfThread[thread_handling];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
-pthread_cond_t condition_check = PTHREAD_COND_INITIALIZER;
 
 //Dung cho client, tham so dang de trong
-void checkUsername(char *username);
-void checkAccount(char *username, char *password);
-void registerInfo(char *username, short locationID, short sensorIDList[]);
-
-void getInfoImmediately(char* fileName, char *type, short locationID);
-void getInfoByDay(char* fileName, char *type, short locationID, char *start, char *end);
-void getInfoByMonth(char* fileName, char *type, short localocationIDtion, char *start, char *end);
-void getInfoByYear(char* fileName, char *type, short locationID, char *start, char *end);
-
-//Dung cho sensor, tham so dang de trong
-void setInfo(char *type, short locationID, char *timeType, float value);
+int checkUsername(char *username);
+int checkAccount(char *username, char *password);
 
 
-int main(){
-	MYSQL *con = mysql_init(NULL);
+// Done
+int getInfoByDay(FILE* fileName, char *typeID, char * locationID, char *date) {
+    MYSQL *con = mysql_init(NULL);
 
     if (con == NULL)
     {
         fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
         exit(1);
     }
 
@@ -49,18 +25,35 @@ int main(){
           "Weather", 0, NULL, 0) == NULL)
     {
         fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
         exit(1);
     }
 
-    if(mysql_query(con, "select * from Register r join User u on r.userID = u.userID where u.userID = 1;")) {
+    
+
+    char test_query[10001];
+    strcpy(test_query, "SELECT HOUR(d.Time) AS Hour, d.Value AS Value FROM `Data` d WHERE d.LocationId = ");
+    strcat(test_query, locationID);
+    strcat(test_query, " AND d.TypeId = ");
+    strcat(test_query, typeID);
+    strcat(test_query, " AND Date(d.Time) = Date(\'");
+    strcat(test_query, date);
+    strcat(test_query, "\');");
+
+    
+
+    if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
         exit(1);
     }
+
 
     MYSQL_RES *result = mysql_store_result(con);
 
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
         exit(1);
     }
 
@@ -68,20 +61,470 @@ int main(){
 
     MYSQL_ROW row;
 
+    fprintf(fileName,"[\n");
+    int count = 0;
+
     while ((row = mysql_fetch_row(result)))
     {
-        for(int i = 0; i < num_fields; i++)
-        {
-            printf("%s ", row[i] ? row[i] : "NULL");
-        }
-
-        printf("\n");
+        if (count != 0) fprintf(fileName,",\n");
+        char *time = row[0] ? row[0] : "null";
+        char *value = row[1] ? row[1] : "null";        
+        fprintf(fileName,"{\"Time\": %s, \"Value\": %s}",time, value);
+        count++;
     }
 
+    fprintf(fileName,"\n]");
+
+
     mysql_free_result(result);
-
-
     mysql_close(con);
+    return 1;
+}
+
+// Done
+int getInfoByMonth(FILE* fileName, char *typeID, char * locationID, char *date) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "SELECT DAY(d.Time) AS Day, AVG(d.Value) AS Value FROM `Data` d WHERE d.LocationId = ");
+    strcat(test_query, locationID);
+    strcat(test_query, " AND d.TypeId = ");
+    strcat(test_query, typeID);
+    strcat(test_query, " AND YEAR(d.Time) = YEAR(\'");
+    strcat(test_query, date);
+    strcat(test_query, "\') AND MONTH(d.Time) = MONTH(\'");
+    strcat(test_query, date);
+    strcat(test_query, "\')GROUP BY Day;");
+
+    
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    fprintf(fileName,"[\n");
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        if (count != 0) fprintf(fileName,",\n");
+        char *time = row[0] ? row[0] : "null";
+        char *value = row[1] ? row[1] : "null";        
+        fprintf(fileName,"{\"Time\": %s, \"Value\": %s}",time, value);
+        count++;
+    }
+
+    fprintf(fileName,"\n]");
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+}
+
+//Done
+int getInfoByYear(FILE* fileName, char *typeID, char * locationID, char *date) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "SELECT MONTH(d.Time) AS Month, AVG(d.Value) AS Value FROM `Data` d WHERE d.LocationId = ");
+    strcat(test_query, locationID);
+    strcat(test_query, " AND d.TypeId = ");
+    strcat(test_query, typeID);
+    strcat(test_query, " AND YEAR(d.Time) = YEAR(\'");
+    strcat(test_query, date);
+    strcat(test_query, "\') GROUP BY Month;");
+
+    
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    fprintf(fileName,"[\n");
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        if (count != 0) fprintf(fileName,",\n");
+        char *time = row[0] ? row[0] : "null";
+        char *value = row[1] ? row[1] : "null";        
+        fprintf(fileName,"{\"Time\": %s, \"Value\": %s}",time, value);
+        count++;
+    }
+
+    fprintf(fileName,"\n]");
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+}
+
+
+//Lay danh sach location -- Done
+int getLocation(FILE * fileName) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "select * from Location where 1;");
+
+    
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    fprintf(fileName,"[\n");
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        if (count != 0) fprintf(fileName,",\n");
+        char *locationID = row[0] ? row[0] : "null";
+        char *localtionName = row[1] ? row[1] : "null";        
+        fprintf(fileName,"{\"locationID\": %s, \"locationName\": \"%s\"}",locationID, localtionName);
+        count++;
+    }
+
+    fprintf(fileName,"\n]");
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+
+}
+
+//Done
+int getType(FILE * fileName) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "select * from Type where 1;");
+
+    
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    fprintf(fileName,"[\n");
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        if (count != 0) fprintf(fileName,",\n");
+        char *typeID = row[0] ? row[0] : "null";
+        char *typeName = row[1] ? row[1] : "null";     
+        char *typeValue = row[2] ? row[2] : "null";       
+        fprintf(fileName,"{\"TypeID\": %s, \"TypeName\": \"%s\", \"TypeValue\": \"%s\"}",typeID, typeName, typeValue);
+        count++;
+    }
+
+    fprintf(fileName,"\n]");
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+}
+
+//Done
+int getTypeByLocation(FILE * fileName, char * locationID) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "SELECT t.* FROM Data d JOIN Type t ON d.TypeId = t.TypeId WHERE d.LocationId = ");
+    strcat(test_query, locationID);
+    strcat(test_query, " GROUP BY d.TypeId;");
+
+    
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    fprintf(fileName,"[\n");
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        if (count != 0) fprintf(fileName,",\n");
+        char *typeID = row[0] ? row[0] : "null";
+        char *typeName = row[1] ? row[1] : "null";     
+        char *typeValue = row[2] ? row[2] : "null";       
+        fprintf(fileName,"{\"TypeID\": %s, \"TypeName\": \"%s\", \"TypeValue\": \"%s\"}",typeID, typeName, typeValue);
+        count++;
+    }
+
+    fprintf(fileName,"\n]");
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+}
+
+//Done
+int registerInfo(char *userID, char *locationID, char *typeID) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "INSERT INTO `Register` (`RegisterId`, `UserId`, `LocationId`, `TypeId`) VALUES (NULL, ");
+    strcat(test_query, userID);
+    strcat(test_query, ", ");
+    strcat(test_query, locationID);
+    strcat(test_query, ", ");
+    strcat(test_query, typeID);
+    strcat(test_query, ");");
+
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+    
+    mysql_close(con);
+    return 1;
+}
+
+//Done
+int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "DELETE FROM Register WHERE UserId = ");
+    strcat(test_query, userID);
+    strcat(test_query, " AND LocationId = ");
+    strcat(test_query, locationID);
+    strcat(test_query, " AND TypeId = ");
+    strcat(test_query, typeID);
+    strcat(test_query, ";");
+
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+        exit(1);
+    }
+    
+    mysql_close(con);
+    return 1;
+}
+
+
+int main(){
+    // FILE *daydata = fopen("typebylocation.txt","w");
+    // if(daydata == NULL)
+    // {
+    //   printf("Error!");   
+    //   exit(1);             
+    // }
+    // int n = getTypeByLocation(daydata, "15");
+    // if (n < 0) {
+    //     printf("Err");
+    //     exit(1);
+    // }
+
+    deleteRegisterInfo("1", "1", "1");
+	
+    //fclose(daydata);
 
 	return 0;
 }
