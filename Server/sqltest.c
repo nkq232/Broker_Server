@@ -5,11 +5,178 @@
 
 
 
-//Dung cho client, tham so dang de trong
-int checkUsername(char *username);
-int checkAccount(char *username, char *password);
+/**
+* Client
+*/
 
 
+//Check database has username? Return number of username
+//Khong can thiet lam nhung van done
+int checkUsername(char *username) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "select * from User u where u.username = \'");
+    strcat(test_query, username);
+    strcat(test_query, "\' ;");
+    
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    MYSQL_ROW row;
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return -1;
+    }
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result))) count++;
+
+    mysql_close(con);
+    return count;
+}
+
+//Return -1 if error, return userID if success
+//Done
+char * signIn(char *username, char *password) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return "-1";
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return "-1";
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "select * from User u where u.username = \'");
+    strcat(test_query, username);
+    strcat(test_query, "\' and u.password = \'");
+    strcat(test_query, password);
+    strcat(test_query, "\' ;");
+    
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return "-1";
+    }
+
+    MYSQL_ROW row;
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return "-1";
+    }
+
+    if ((row = mysql_fetch_row(result))) {
+        mysql_close(con);
+        return row[0];
+    }
+    mysql_close(con);
+    return "-1";
+
+}
+
+//Return 1 if success, return 0 if username existed, return -1 if error;
+//Done
+int signUp(char *username, char *password) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return -1;
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return -1;
+    }
+
+    
+
+    char test_query[10001];
+    strcpy(test_query, "select * from User u where u.username = \'");
+    strcat(test_query, username);
+    strcat(test_query, "\' ;");
+    
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return -1;
+    }
+
+    MYSQL_ROW row;
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return -1;
+    }
+
+    if ((row = mysql_fetch_row(result))) {
+        mysql_close(con);
+        return 0;
+    }
+
+    strcpy(test_query, "INSERT INTO `User` (`UserId`, `UserName`, `Password`) VALUES (NULL, \'");
+    strcat(test_query, username);
+    strcat(test_query, "\', \'");
+    strcat(test_query, password);
+    strcat(test_query, "\') ;");
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        mysql_close(con);
+        return -1;
+    }
+
+    mysql_close(con);
+    return 1;
+}
+
+
+// Query and write data to FILE. Return -1 if error, 1 if success
 // Done
 int getInfoByDay(FILE* fileName, char *typeID, char * locationID, char *date) {
     MYSQL *con = mysql_init(NULL);
@@ -18,7 +185,6 @@ int getInfoByDay(FILE* fileName, char *typeID, char * locationID, char *date) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -26,7 +192,6 @@ int getInfoByDay(FILE* fileName, char *typeID, char * locationID, char *date) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -45,7 +210,6 @@ int getInfoByDay(FILE* fileName, char *typeID, char * locationID, char *date) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
 
@@ -54,7 +218,6 @@ int getInfoByDay(FILE* fileName, char *typeID, char * locationID, char *date) {
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     int num_fields = mysql_num_fields(result);
@@ -89,7 +252,6 @@ int getInfoByMonth(FILE* fileName, char *typeID, char * locationID, char *date) 
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -97,7 +259,6 @@ int getInfoByMonth(FILE* fileName, char *typeID, char * locationID, char *date) 
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -118,7 +279,6 @@ int getInfoByMonth(FILE* fileName, char *typeID, char * locationID, char *date) 
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
 
@@ -127,7 +287,6 @@ int getInfoByMonth(FILE* fileName, char *typeID, char * locationID, char *date) 
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     int num_fields = mysql_num_fields(result);
@@ -162,7 +321,6 @@ int getInfoByYear(FILE* fileName, char *typeID, char * locationID, char *date) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -170,7 +328,6 @@ int getInfoByYear(FILE* fileName, char *typeID, char * locationID, char *date) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -189,7 +346,6 @@ int getInfoByYear(FILE* fileName, char *typeID, char * locationID, char *date) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
 
@@ -198,7 +354,6 @@ int getInfoByYear(FILE* fileName, char *typeID, char * locationID, char *date) {
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     int num_fields = mysql_num_fields(result);
@@ -234,7 +389,6 @@ int getLocation(FILE * fileName) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -242,7 +396,6 @@ int getLocation(FILE * fileName) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -255,7 +408,6 @@ int getLocation(FILE * fileName) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
 
@@ -264,7 +416,6 @@ int getLocation(FILE * fileName) {
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     int num_fields = mysql_num_fields(result);
@@ -300,7 +451,6 @@ int getType(FILE * fileName) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -308,7 +458,6 @@ int getType(FILE * fileName) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -321,7 +470,6 @@ int getType(FILE * fileName) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
 
@@ -330,7 +478,6 @@ int getType(FILE * fileName) {
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     int num_fields = mysql_num_fields(result);
@@ -366,7 +513,6 @@ int getTypeByLocation(FILE * fileName, char * locationID) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -374,7 +520,6 @@ int getTypeByLocation(FILE * fileName, char * locationID) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -389,7 +534,6 @@ int getTypeByLocation(FILE * fileName, char * locationID) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
 
@@ -398,7 +542,6 @@ int getTypeByLocation(FILE * fileName, char * locationID) {
     if (result == NULL) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     int num_fields = mysql_num_fields(result);
@@ -434,7 +577,6 @@ int registerInfo(char *userID, char *locationID, char *typeID) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -442,7 +584,6 @@ int registerInfo(char *userID, char *locationID, char *typeID) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -460,7 +601,6 @@ int registerInfo(char *userID, char *locationID, char *typeID) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
     
     mysql_close(con);
@@ -475,7 +615,6 @@ int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
@@ -483,7 +622,6 @@ int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
     {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
 
     
@@ -501,7 +639,6 @@ int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
         return -1;
-        exit(1);
     }
     
     mysql_close(con);
@@ -522,8 +659,7 @@ int main(){
     //     exit(1);
     // }
 
-    deleteRegisterInfo("1", "1", "1");
-	
+    printf("%d\n", signUp("Tuan", "Tuan2"));
     //fclose(daydata);
 
 	return 0;
