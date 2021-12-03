@@ -11,7 +11,7 @@
 #include "threadQueue.h"
 #include "threadQueue.c"
 //#include "sqltest.c"
-//#include <json.c/json.h>
+#include <json.c/json.h>
 
 #define MAX 1024
 #define PORT 8082
@@ -71,6 +71,21 @@ void  *communicate(void * client){
 						write(confd, "211 Account OK", strlen("211 Account OK"));
 						printf("Sending to client: 211 Account OK");
 
+						bzero(readBuffer, MAX);
+						read(confd, readBuffer, sizeof(readBuffer));
+
+						struct json_object *parsed_json;
+						struct json_object *username;
+						struct json_object *password;
+
+						parsed_json = json_tokener_parse(readBuffer);
+
+						json_object_object_get_ex(parsed_json, "Username", &username);
+						json_object_object_get_ex(parsed_json, "Password", &password);
+						signUp(json_object_get_string(username), json_object_get_string(password));
+
+						write(confd, "219 Register Success", strlen("219 Register Success"));
+						printf("Sending to client: 219 Register Success");
 
 					} else if (strncmp(readBuffer, "SIGN IN", 7) == 0)
 					{
@@ -81,6 +96,22 @@ void  *communicate(void * client){
 						read(confd, readBuffer, sizeof(readBuffer));
 						write(confd, "221 Account OK", strlen("221 Account OK"));
 						printf("Sending to client: 211 Account OK");
+
+						bzero(readBuffer, MAX);
+						read(confd, readBuffer, sizeof(readBuffer));
+
+						struct json_object *parsed_json;
+						struct json_object *username;
+						struct json_object *password;
+
+						parsed_json = json_tokener_parse(readBuffer);
+
+						json_object_object_get_ex(parsed_json, "Username", &username);
+						json_object_object_get_ex(parsed_json, "Password", &password);
+						signIn(json_object_get_string(username), json_object_get_string(password));
+
+						write(confd, "2 Sign in success", strlen("2 Sign in success"));
+						printf("Sending to client: 2 Sign in success");
 					} else {
 						write(confd, "Systax error" , strlen("Syntax error"));
 						printf("Sending to client: Syntax error");
@@ -196,7 +227,22 @@ void  *communicate(void * client){
 						/* code */
 						write(confd, "231 Add register OK", strlen("231 Add register OK"));
 						printf("Sending to client: 231 Add register OK");
-						FILE* file = fopen("location.txt", "w");
+						bzero(readBuffer, MAX);
+						read(confd, readBuffer, sizeof(readBuffer));
+
+						struct json_object *parsed_json;
+						struct json_object *locationID;
+						struct json_object *typeID;
+
+						parsed_json = json_tokener_parse(readBuffer);
+
+						json_object_object_get_ex(parsed_json, "LocationId", &locationID);
+						json_object_object_get_ex(parsed_json, "TypeId", &typeID);
+						signIn(json_object_get_string(locationID), json_object_get_string(typeID));
+
+						write(confd, "2 Sign in success", strlen("2 Sign in success"));
+						printf("Sending to client: 2 Sign in success");
+
 						
 						
 						/* code */
@@ -250,13 +296,19 @@ void  *communicate(void * client){
 			printf("Sending to Sensor: 501 Info OK\n");
 			bzero(readBuffer, MAX);
 			// char id[50], type[50], locationID[50], value[50];
-			// struct json_object *parsed_json;
-			// struct json_object *id;
-			// struct json_object *type;
-			// struct json_object *locationID;
-			// struct json_object *value;
+			struct json_object *parsed_json;
+			struct json_object *type;
+			struct json_object *locationID;
+			struct json_object *value;
 						
-			// read(confd, readBuffer, sizeof(readBuffer));
+			read(confd, readBuffer, sizeof(readBuffer));
+
+			parsed_json = json_tokener_parse(readBuffer);
+
+			json_object_object_get_ex(parsed_json, "TypeID", &type);
+			json_object_object_get_ex(parsed_json, "LocationID", &locationID);
+			json_object_object_get_ex(parsed_json, "Value", &value);
+
 			// int check1 = 0, check2 = 0, check3 = 0, check4 = 0;
 			// int for1 = 0, for2 = 0, for3 = 0, for4 = 0, for_stop = 0;
 			// for (int i = 0; i < strlen(readBuffer); ++i)
