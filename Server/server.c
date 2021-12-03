@@ -10,14 +10,14 @@
 #include <pthread.h>
 #include "threadQueue.h"
 #include "threadQueue.c"
-#include "sqltest.c"
-#include <json.c/json.h>
+//#include "sqltest.c"
+//#include <json.c/json.h>
 
 #define MAX 1024
 #define PORT 8082
 #define SA struct sockaddr
 #define Server_handle 100
-#define thread_handling 2
+#define thread_handling 5
 
 pthread_t sourceOfThread[thread_handling];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -91,8 +91,8 @@ void  *communicate(void * client){
 						/* code */
 						write(confd, "223 GET Location OK", strlen("223 GET Location OK"));
 						printf("Sending to client: 223 GET Location OK");
-						File* file = fopen("location.txt", "w");
-						getLocation(fileName);
+						FILE* file = fopen("location.txt", "w");
+						getLocation(file);
 						
 						/* code */
 						size_t a;
@@ -115,7 +115,7 @@ void  *communicate(void * client){
 								writeBuffer[a] = '\0';
 								write(confd, writeBuffer,a);
 							} else {
-								write(confd, "Done", strlen(Done));
+								write(confd, "Done", strlen("Done"));
 								break;
 							}
 						} 
@@ -125,7 +125,7 @@ void  *communicate(void * client){
 						/* code */
 						write(confd, "224 GET Type Sensor OK", strlen("223 GET Type Sensor OK"));
 						printf("Sending to client: 223 GET Location OK");
-						File* file = fopen("sensorType.txt", "w");
+						FILE* file = fopen("sensorType.txt", "w");
 						getType(file);
 						
 						/* code */
@@ -149,7 +149,7 @@ void  *communicate(void * client){
 								writeBuffer[a] = '\0';
 								write(confd, writeBuffer,a);
 							} else {
-								write(confd, "Done", strlen(Done));
+								write(confd, "Done", strlen("Done"));
 								break;
 							}
 						} 
@@ -159,8 +159,11 @@ void  *communicate(void * client){
 						/* code */
 						write(confd, "230 Info Register OK", strlen("230 Info Register OK"));
 						printf("Sending to client: 230 Info Register OK");
-						File* file = fopen("infoRegister.txt", "w");
-						getLocation(fileName);
+						FILE* file = fopen("infoRegister.txt", "w");
+						bzero(readBuffer, MAX);
+						read(confd, readBuffer, sizeof(readBuffer));
+
+						getTypeByLocation(file, readBuffer);
 						
 						/* code */
 						size_t a;
@@ -183,77 +186,54 @@ void  *communicate(void * client){
 								writeBuffer[a] = '\0';
 								write(confd, writeBuffer,a);
 							} else {
-								write(confd, "Done", strlen(Done));
+								write(confd, "Done", strlen("Done"));
 								break;
 							}
 						} 
 						remove(file);
-					} else if (strncmp(readBuffer, "GET TYPE", 8) == 0)
+					} else if (strncmp(readBuffer, "ADD REGISTER", 12) == 0)
 					{
 						/* code */
-						write(confd, "223 GET Location OK", strlen("223 GET Location OK"));
-						printf("Sending to client: 223 GET Location OK");
-						File* file = fopen("location.txt", "w");
-						getLocation(fileName);
+						write(confd, "231 Add register OK", strlen("231 Add register OK"));
+						printf("Sending to client: 231 Add register OK");
+						FILE* file = fopen("location.txt", "w");
+						
 						
 						/* code */
 						size_t a;
-						while(1) {
-							if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
-							{
-								/* code */
-								writeBuffer[a] = '\0';
-								write(confd, writeBuffer,a);
-							} else {
-								write(confd, "Done", strlen(Done));
-								break;
-							}
-						} 
 						remove(file);
-					} else if (strncmp(readBuffer, "GET TYPE", 8) == 0)
+					} else if (strncmp(readBuffer, "DELETE REGISTER", 15) == 0)
 					{
 						/* code */
-						write(confd, "223 GET Location OK", strlen("223 GET Location OK"));
-						printf("Sending to client: 223 GET Location OK");
-						File* file = fopen("location.txt", "w");
-						getLocation(fileName);
+						write(confd, "232 Delete register OK", strlen("232 Delete register OK"));
+						printf("Sending to client: 232 Delete register OK");
+						FILE* file = fopen("location.txt", "w");
+						
 						
 						/* code */
 						size_t a;
-						while(1) {
-							if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
-							{
-								/* code */
-								writeBuffer[a] = '\0';
-								write(confd, writeBuffer,a);
-							} else {
-								write(confd, "Done", strlen(Done));
-								break;
-							}
-						} 
+						
 						remove(file);
-					} else if (strncmp(readBuffer, "GET TYPE", 8) == 0)
+					} else if (strncmp(readBuffer, "GET INFO SENSOR", 15) == 0)
 					{
 						/* code */
-						write(confd, "223 GET Location OK", strlen("223 GET Location OK"));
-						printf("Sending to client: 223 GET Location OK");
-						File* file = fopen("location.txt", "w");
-						getLocation(fileName);
+						write(confd, "2 Get Info Sensor OK", strlen("2 Get Info Sensor OK"));
+						printf("Sending to client: 2 Get Info Sensor OK");
+						FILE* file = fopen("location.txt", "w");
+						
 						
 						/* code */
 						size_t a;
-						while(1) {
-							if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
-							{
-								/* code */
-								writeBuffer[a] = '\0';
-								write(confd, writeBuffer,a);
-							} else {
-								write(confd, "Done", strlen(Done));
-								break;
-							}
-						} 
 						remove(file);
+					} else if (strncmp(readBuffer, "QUIT", 4) == 0)
+					{
+						/* code */
+						write(confd, "500 bye", strlen("500 bye"));
+						printf("Sending to client: 500 bye");
+						break;
+					} else {
+						write(confd, "Syntax error", strlen("Syntax error"));
+						printf("Sending to client: Syntax error");
 					}
 
 				}
@@ -269,12 +249,12 @@ void  *communicate(void * client){
 			write(confd, "501 Info OK", strlen("501 Info OK"));
 			printf("Sending to Sensor: 501 Info OK\n");
 			bzero(readBuffer, MAX);
-			char id[50], type[50], locationID[50], value[50];
-			struct json_object *parsed_json;
-			struct json_object *id;
-			struct json_object *type;
-			struct json_object *locationID;
-			struct json_object *value;
+			// char id[50], type[50], locationID[50], value[50];
+			// struct json_object *parsed_json;
+			// struct json_object *id;
+			// struct json_object *type;
+			// struct json_object *locationID;
+			// struct json_object *value;
 						
 			// read(confd, readBuffer, sizeof(readBuffer));
 			// int check1 = 0, check2 = 0, check3 = 0, check4 = 0;
@@ -345,7 +325,7 @@ void  *communicate(void * client){
 			// 	}
 
 			// }
-			setInfo(id, type, locationID, value);
+			//setInfo(id, type, locationID, value);
 			escape = 1;
 
 		}
