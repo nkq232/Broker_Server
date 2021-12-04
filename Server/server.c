@@ -62,7 +62,7 @@ void  *communicate(void * client){
 				bzero(readBuffer,MAX);
 				read(confd, readBuffer, sizeof(readBuffer));
 				
-				if (strncmp(readBuffer, "CHECK", 5) == 0)
+				if (strncmp(readBuffer, "PING", 4) == 0)
 				{
 					/* code */
 					write(confd, "299 OK", strlen("299 OK"));
@@ -123,6 +123,11 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "Username", &username);
 							json_object_object_get_ex(parsed_json, "Password", &password);
 							strcpy(userClientId, signIn(json_object_get_string(username), json_object_get_string(password)));
+
+							if (userClientId)
+							{
+								/* code */
+							}
 
 							write(confd, "2 Sign in success", strlen("2 Sign in success"));
 							printf("Sending to client: 2 Sign in success");
@@ -316,16 +321,16 @@ void  *communicate(void * client){
 							switch(typeTime)
 							{
 								case 'Day':
-									getInfoByDay(file, typeID, locationID, date);
+									getInfoByDay(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 									break;
 								case 'Month':
-									getInfoByMonth(file, typeID, locationID, date);
+									getInfoByMonth(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 									break;
-								case 'Day':
-									getInfoByYear(file, typeID, locationID, date);
+								case 'Year':
+									getInfoByYear(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 									break;
 								default:
-									getInfoByNow(file, typeID, locationID, date);
+
 							}
 							/* code */
 							
@@ -390,6 +395,8 @@ void  *communicate(void * client){
 
 			write(confd, "502 Get info success", strlen("502 Get info success"));
 			printf("Sending to client: 502 Get info success");
+
+
 
 			escape = 1;
 
