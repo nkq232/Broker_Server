@@ -208,7 +208,14 @@ void  *communicate(void * client){
 							bzero(readBuffer, MAX);
 							read(confd, readBuffer, sizeof(readBuffer));
 
-							getTypeByLocation(file, readBuffer);
+							struct json_object *parsed_json;
+							struct json_object *locationID;
+							
+							parsed_json = json_tokener_parse(readBuffer);
+
+							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
+							
+							getTypeByLocation(file, json_object_get_string(locationID));
 							
 							/* code */
 							size_t a;
