@@ -96,10 +96,13 @@ void  *communicate(void * client){
 
 							json_object_object_get_ex(parsed_json, "Username", &username);
 							json_object_object_get_ex(parsed_json, "Password", &password);
-							signUp(json_object_get_string(username), json_object_get_string(password));
-
-							write(confd, "219 Register Success", strlen("219 Register Success"));
-							printf("Sending to client: 219 Register Success");
+							if(signUp(json_object_get_string(username), json_object_get_string(password)) == 1) {
+								write(confd, "219 Register Success", strlen("219 Register Success"));
+								printf("Sending to client: 219 Register Success");
+							} else {
+								write(confd, "413 Username Existed", strlen("413 Username Existed"));
+								printf("Sending to client: 413 Username Existed");
+							}
 
 						} else if (strncmp(readBuffer, "SIGN IN", 7) == 0)
 						{
@@ -124,13 +127,17 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "Password", &password);
 							strcpy(userClientId, signIn(json_object_get_string(username), json_object_get_string(password)));
 
-							if (userClientId)
+							if (userClientId != '-1')
 							{
 								/* code */
+								write(confd, "218 Login Success", strlen("218 Login Success"));
+								printf("Sending to client: 218 Login Success");
+							} else {
+								write(confd, "407 Wrong Account", strlen("407 Wrong Account"));
+								printf("Sending to client: 407 Wrong Account");
 							}
 
-							write(confd, "2 Sign in success", strlen("2 Sign in success"));
-							printf("Sending to client: 2 Sign in success");
+							
 						} else {
 							write(confd, "Systax error" , strlen("Syntax error"));
 							printf("Sending to client: Syntax error");
@@ -152,7 +159,7 @@ void  *communicate(void * client){
 							fseek(file, 0, SEEK_SET);
 
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{Filesize: %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 							write(confd, writeBuffer, strlen(writeBuffer));
 							printf("Sending to client: Filesize : %d", size);
 
@@ -165,7 +172,7 @@ void  *communicate(void * client){
 									writeBuffer[a] = '\0';
 									write(confd, writeBuffer,a);
 								} else {
-									write(confd, "Done", strlen("Done"));
+									
 									break;
 								}
 							} 
@@ -186,7 +193,7 @@ void  *communicate(void * client){
 							fseek(file, 0, SEEK_SET);
 
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{Filesize: %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 							write(confd, writeBuffer, strlen(writeBuffer));
 							printf("Sending to client: Filesize : %d", size);
 
@@ -199,7 +206,7 @@ void  *communicate(void * client){
 									writeBuffer[a] = '\0';
 									write(confd, writeBuffer,a);
 								} else {
-									write(confd, "Done", strlen("Done"));
+									
 									break;
 								}
 							} 
@@ -230,7 +237,7 @@ void  *communicate(void * client){
 							fseek(file, 0, SEEK_SET);
 
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{Filesize: %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 							write(confd, writeBuffer, strlen(writeBuffer));
 							printf("Sending to client: Filesize : %d", size);
 
@@ -243,7 +250,7 @@ void  *communicate(void * client){
 									writeBuffer[a] = '\0';
 									write(confd, writeBuffer,a);
 								} else {
-									write(confd, "Done", strlen("Done"));
+									
 									break;
 								}
 							} 
@@ -266,13 +273,9 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "TypeId", &typeID);
 							registerInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID));
 
-							write(confd, "2 Sign in success", strlen("2 Sign in success"));
-							printf("Sending to client: 2 Sign in success");
-
 							
 							
 							/* code */
-							size_t a;
 							remove(file);
 						} else if (strncmp(readBuffer, "DELETE REGISTER", 15) == 0)
 						{
@@ -299,7 +302,7 @@ void  *communicate(void * client){
 							/* code */
 							write(confd, "2 Get Info Sensor OK", strlen("2 Get Info Sensor OK"));
 							printf("Sending to client: 2 Get Info Sensor OK");
-							FILE* file = fopen("getInformationSensor.txt", "w");
+							
 							
 							
 							bzero(readBuffer, MAX);
@@ -318,48 +321,63 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "Date", &date);
 							json_object_object_get_ex(parsed_json, "TypeTime", &typeTime);
 
-							switch(typeTime)
-							{
-								case 'Day':
-									getInfoByDay(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
-									break;
-								case 'Month':
-									getInfoByMonth(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
-									break;
-								case 'Year':
-									getInfoByYear(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
-									break;
-								default:
-
-							}
-							/* code */
 							
-							size_t a;
+							if (typeTime == 'Now')
+							{
+								/* code */
+								char result[MAX];
+								strcpy(result,getInfoByNow(json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date)));
+								bzero(writeBuffer, MAX);
+								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Value\": %s}", result); 
+								write(confd, writeBuffer, strlen(writeBuffer));
+								free(result);
+							} else {
 
-							fseek(file, 0, SEEK_END);
-							int size = ftell(file); 
-							fseek(file, 0, SEEK_SET);
+								FILE* file = fopen("getInformationSensor.txt", "w");
 
-							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{Filesize: %d}", size); 
-							write(confd, writeBuffer, strlen(writeBuffer));
-							printf("Sending to client: Filesize : %d", size);
-
-							bzero(writeBuffer, MAX);
-
-							while(1) {
-								if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
+								switch(typeTime)
 								{
-									/* code */
-									writeBuffer[a] = '\0';
-									write(confd, writeBuffer,a);
-								} else {
-									write(confd, "Done", strlen("Done"));
-									break;
+									case 'Day':
+										getInfoByDay(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
+										break;
+									case 'Month':
+										getInfoByMonth(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
+										break;
+									case 'Year':
+										getInfoByYear(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
+										break;
+									default:
+										
 								}
-							}
+								/* code */	
 
-							remove(file);
+								size_t a;
+
+								fseek(file, 0, SEEK_END);
+								int size = ftell(file); 
+								fseek(file, 0, SEEK_SET);
+
+								bzero(writeBuffer, MAX);
+								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
+								write(confd, writeBuffer, strlen(writeBuffer));
+								printf("Sending to client: Filesize : %d", size);
+
+								bzero(writeBuffer, MAX);
+
+								while(1) {
+									if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
+									{
+										/* code */
+										writeBuffer[a] = '\0';
+										write(confd, writeBuffer,a);
+									} else {
+										
+										break;
+									}
+								}
+
+								remove(file);
+							}
 						} else {
 							write(confd, "Syntax error", strlen("Syntax error"));
 							printf("Sending to client: Syntax error");
@@ -396,6 +414,7 @@ void  *communicate(void * client){
 			write(confd, "502 Get info success", strlen("502 Get info success"));
 			printf("Sending to client: 502 Get info success");
 
+			//Chưa có hàm
 
 
 			escape = 1;
