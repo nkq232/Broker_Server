@@ -10,7 +10,6 @@
 #include <pthread.h>
 #include "threadQueue.h"
 #include "threadQueue.c"
-//#include "sqltest.c"
 #include <json.c/json.h>
 
 #define MAX 1024
