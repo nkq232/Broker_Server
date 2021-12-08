@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include "threadQueue.h"
 #include "threadQueue.c"
-#include <json.c/json.h>
+#include <json-c/json.h>
 
 #define MAX 1024
 #define PORT 8082
