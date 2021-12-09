@@ -501,6 +501,7 @@ void  *communicate(void * client){
 
 							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
 							json_object_object_get_ex(parsed_json, "TypeId", &typeID);
+							//TODO fix delete;
 							if(deleteRegisterInfo(myUserId, json_object_get_string(locationID), json_object_get_string(typeID)) == 1) {
 								if(write(confd, "246 Delete Success", strlen("246 Delete Success"))){
 									printf("Sending to client: 246 Delete Success");
