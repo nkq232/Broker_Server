@@ -4,6 +4,16 @@
 #include <string.h>
 
 
+int cvtChar2Int(char* c) {
+    int i = 0;
+    int num = 0;
+    while(c[i]!='\0') {
+        num = num * 10 + ((int)c[i] - (int)'0');
+        i++;
+    }
+    return num;
+}
+
 
 /**
 * Client
@@ -645,6 +655,61 @@ int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
     return 1;
 }
 
+int getTypeByUser(int type[], int*len, char * userID, char* locationID) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    
+
+    char test_query[1000];
+    snprintf(test_query, sizeof(test_query), "select TypeId from Register where LocationId = %s and UserID = %s;", locationID, userID); 
+    
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    int i = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        int n = row[0] ? cvtChar2Int(row[0]) : -1;
+        type[i] = n;
+        i++;
+    }
+    *len = i;
+
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+}
+
 int insertValueFromSensor(char *typeID, char* locationID, char* value) {
     MYSQL *con = mysql_init(NULL);
 
@@ -684,56 +749,14 @@ int insertValueFromSensor(char *typeID, char* locationID, char* value) {
 
 
 // int main(){
-//     FILE *daydata = fopen("daydata.json","w");
-//     if(daydata == NULL)
-//     {
-//       printf("Error!");   
-//       exit(1);             
+    
+
+//     int temp[1000];
+//     int len;
+//     getTypeByUser(temp, &len, "4", "24");
+//     for (int i = 0; i < len; i++) {
+//         printf("%d ", temp[i]);
 //     }
-//     int n1 = getInfoByDay(daydata, "3", "15", "2021-11-01");
-//     if (n1 < 0) {
-//         printf("Err");
-//         exit(1);
-//     }
-
-
-//     FILE *monthdata = fopen("monthdata.json","w");
-//     if(monthdata == NULL)
-//     {
-//       printf("Error!");   
-//       exit(1);             
-//     }
-//     int n2 = getInfoByMonth(monthdata, "3", "15", "2021-11-01");
-//     if (n2 < 0) {
-//         printf("Err");
-//         exit(1);
-//     }
-
-
-//     FILE *yeardata = fopen("yeardata.json","w");
-//     if(yeardata == NULL)
-//     {
-//       printf("Error!");   
-//       exit(1);             
-//     }
-//     int n3 = getInfoByYear(yeardata, "3", "15", "2021-11-01");
-//     if (n3 < 0) {
-//         printf("Err");
-//         exit(1);
-//     }
-
-//     FILE *location = fopen("location.json", "w");
-//     FILE *sensor = fopen("sensor.json", "w");
-//     FILE *sensorByLocation = fopen("sensorbylocation.json", "w");
-
-//     getLocation(location);
-//     getType(sensor);
-//     getTypeByLocation(sensorByLocation, "15");
-
-//     printf("%d\n", signUp("Tuan", "Tuan2"));
-//     //fclose(daydata);
-
-//     printf("%d\n", insertValueFromSensor("1", "7", "30"));
 
 // 	return 0;
 // }

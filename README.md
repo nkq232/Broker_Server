@@ -14,4 +14,4 @@ sudo apachectl stop
 gcc -o test sqltest.c `mysql_config --cflags --libs`
 
 
-gcc -ljson-c -pthread -o test server.c sqltest.c `mysql_config --cflags --libs`
+gcc -pthread -o server server.c  `mysql_config --cflags --libs` -ljson-c
