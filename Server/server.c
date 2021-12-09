@@ -462,6 +462,8 @@ void  *communicate(void * client){
 				printf("Sending to sensor: 502 Get info success");
 
 				//Chưa có hàm
+				//TODO
+				// Gan gia tri vao mang current_values
 
 				if (insertValueFromSensor(json_object_get_string(type), json_object_get_string(locationID), json_object_get_string(value)))
 				{

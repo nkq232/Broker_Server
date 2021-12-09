@@ -747,7 +747,8 @@ int insertValueFromSensor(char *typeID, char* locationID, char* value) {
     return 1;
 }
 
-
+// update du lieu tu mang
+int updateDatabase();
 // int main(){
     
 
