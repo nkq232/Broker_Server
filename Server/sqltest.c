@@ -726,7 +726,8 @@ int getTypeByUser(int type[], int*len, int userID, char* locationID) {
     
 
     char test_query[1000];
-    snprintf(test_query, sizeof(test_query), "select TypeId from Register where LocationId = \'%s\' and UserID = \'%d\';", locationID, userID); 
+    snprintf(test_query, sizeof(test_query), "select TypeId from Register where LocationId = \'%s\' and UserId = \'%d\';", locationID, userID); 
+    printf("\n%s\n", test_query);
     
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));

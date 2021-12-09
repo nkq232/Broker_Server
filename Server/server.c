@@ -601,7 +601,6 @@ void  *communicate(void * client){
 								* Duyet mang type lay value, ghi ra file json
 								* Gui file json
 								*/
-								fakeData();
 								if(write(confd, "252 Get Info Sensor now OK", strlen("252 Get Info Sensor now OK"))){
 									printf("Sending to client: 252 Get Info Sensor now OK\n");
 								} else {
@@ -627,10 +626,14 @@ void  *communicate(void * client){
 								fprintf(file,"[\n");
 								int typeList[SENSOR_MAX];
 								int len;
-								getTypeByUser(typeList, &len, myUserId, locationId);
+
+								int locationIdInt = cvtChar2Int(json_object_get_string(locationId));
+								
+								getTypeByUser(typeList, &len, myUserId, json_object_get_string(locationId));
+								printf("\nLen: %d\n", len);
 								for (int i = 0; i < len; i ++) {
-									printf("{\"TypeId\": %d, \"Value\": %s}", typeList[i], current_values[cvtChar2Int(locationId)][typeList[i]]);
-									fprintf(file, "{\"TypeId\": %d, \"Value\": %s}", typeList[i], current_values[cvtChar2Int(locationId)][typeList[i]]);
+									printf("{\"TypeID\": %d, \"Value\": %s}", typeList[i], current_values[locationIdInt][typeList[i]]);
+									fprintf(file, "{\"TypeID\": %d, \"Value\": %s}", typeList[i], current_values[locationIdInt][typeList[i]]);
 									if (i < len - 1) fprintf(file, ",\n");
  								}
 								fprintf(file,"\n]");
@@ -674,7 +677,7 @@ void  *communicate(void * client){
 										break;
 									}
 								} 
-								remove(file);
+								// remove(file);
 								printf("Sending file to client complete\n");
 							}
 						else {
@@ -729,19 +732,24 @@ void  *communicate(void * client){
 				json_object_object_get_ex(parsed_json, "TypeID", &type);
 				json_object_object_get_ex(parsed_json, "LocationID", &locationID);
 				json_object_object_get_ex(parsed_json, "Value", &value);
+				int x = cvtChar2Int(json_object_get_string(locationID));
+				int y = cvtChar2Int(json_object_get_string(type));
 
-				for (int i = 0; i < LOCATION_MAX; ++i)
-				{
-					for (int j = 0; j < SENSOR_MAX; ++j)
-					{
-						/* code */
-						if (i == cvtChar2Int(json_object_get_string(locationID)) && j == cvtChar2Int(json_object_get_string(type)))
-						{
-							/* code */
-							current_values[i][j] = json_object_get_string(value);
-						}
-					}
-				}
+				printf("\nLId: %d, TId: %d\n", x, y);
+				current_values[x][y] = json_object_get_string(value);
+
+				// for (int i = 0; i < LOCATION_MAX; ++i)
+				// {
+				// 	for (int j = 0; j < SENSOR_MAX; ++j)
+				// 	{
+				// 		/* code */
+				// 		if (i == cvtChar2Int(json_object_get_string(locationID)) && j == cvtChar2Int(json_object_get_string(type)))
+				// 		{
+				// 			/* code */
+				// 			current_values[i][j] = json_object_get_string(value);
+				// 		}
+				// 	}
+				// }
 
 				if(write(confd, "502 Get info success", strlen("502 Get info success"))){
 					printf("Sending to sensor: 502 Get info success");
