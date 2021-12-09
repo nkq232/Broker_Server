@@ -60,13 +60,7 @@ void  *communicate(void * client){
 			while(1) {
 				bzero(readBuffer,MAX);
 				read(confd, readBuffer, sizeof(readBuffer));
-				
-				if (strncmp(readBuffer, "PING", 4) == 0)
-				{
-					/* code */
-					write(confd, "299 OK", strlen("299 OK"));
-					printf("Sending to client: 299 OK");
-				} else if (strncmp(readBuffer, "QUIT", 4) == 0)
+				if (strncmp(readBuffer, "QUIT", 4) == 0)
 				{
 						/* code */
 						write(confd, "500 bye", strlen("500 bye"));
