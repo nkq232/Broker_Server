@@ -579,8 +579,7 @@ int getTypeByLocation(FILE * fileName, char * locationID) {
     return 1;
 }
 
-//Done
-int registerInfo(char *userID, char *locationID, char *typeID) {
+int getTypeByRegister(FILE * fileName, int userID, char * locationID) {
     MYSQL *con = mysql_init(NULL);
 
     if (con == NULL)
@@ -599,14 +598,67 @@ int registerInfo(char *userID, char *locationID, char *typeID) {
     
 
     char test_query[10001];
-    strcpy(test_query, "INSERT INTO `Register` (`RegisterId`, `UserId`, `LocationId`, `TypeId`) VALUES (NULL, ");
-    strcat(test_query, userID);
-    strcat(test_query, ", ");
-    strcat(test_query, locationID);
-    strcat(test_query, ", ");
-    strcat(test_query, typeID);
-    strcat(test_query, ");");
+    snprintf(test_query, sizeof(test_query), "select t.* from Type t join Register r on t.TypeId = r.TypeId where locationId = %s and userId = %d;", locationID, userID); 
+    printf("%s\n",test_query);
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
 
+
+    MYSQL_RES *result = mysql_store_result(con);
+
+    if (result == NULL) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    int num_fields = mysql_num_fields(result);
+
+    MYSQL_ROW row;
+
+    fprintf(fileName,"[\n");
+    int count = 0;
+
+    while ((row = mysql_fetch_row(result)))
+    {
+        if (count != 0) fprintf(fileName,",\n");
+        char *typeID = row[0] ? row[0] : "null";
+        char *typeName = row[1] ? row[1] : "null";     
+        char *typeValue = row[2] ? row[2] : "null";       
+        fprintf(fileName,"{\"TypeID\": %s, \"TypeName\": \"%s\", \"TypeValue\": \"%s\"}",typeID, typeName, typeValue);
+        count++;
+    }
+
+    fprintf(fileName,"\n]");
+
+
+    mysql_free_result(result);
+    mysql_close(con);
+    return 1;
+}
+
+//Done
+int registerInfo(int userID, char *locationID, char *typeID) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+          "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    
+
+    char test_query[10001];
+    snprintf(test_query,sizeof(test_query), "INSERT INTO `Register` (`RegisterId`, `UserId`, `LocationId`, `TypeId`) VALUES (NULL, \'%d\', \'%s\', \'%s\');", userID, locationID, typeID);
 
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
@@ -618,7 +670,7 @@ int registerInfo(char *userID, char *locationID, char *typeID) {
 }
 
 //Done
-int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
+int deleteRegisterInfo(int userID, char *locationID, char *typeID) {
     MYSQL *con = mysql_init(NULL);
 
     if (con == NULL)
@@ -655,7 +707,7 @@ int deleteRegisterInfo(char *userID, char *locationID, char *typeID) {
     return 1;
 }
 
-int getTypeByUser(int type[], int*len, char * userID, char* locationID) {
+int getTypeByUser(int type[], int*len, int userID, char* locationID) {
     MYSQL *con = mysql_init(NULL);
 
     if (con == NULL)
@@ -674,7 +726,7 @@ int getTypeByUser(int type[], int*len, char * userID, char* locationID) {
     
 
     char test_query[1000];
-    snprintf(test_query, sizeof(test_query), "select TypeId from Register where LocationId = \'%s\' and UserID = \'%s\';", locationID, userID); 
+    snprintf(test_query, sizeof(test_query), "select TypeId from Register where LocationId = \'%s\' and UserID = \'%d\';", locationID, userID); 
     
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
@@ -752,12 +804,8 @@ int updateDatabase();
 // int main(){
     
 
-//     int temp[1000];
-//     int len;
-//     getTypeByUser(temp, &len, "4", "24");
-//     for (int i = 0; i < len; i++) {
-//         printf("%d ", temp[i]);
-//     }
+//     FILE *registerTest = fopen("infoRes.json", "w+");
+//     getTypeByRegister(registerTest, "4", "24");
 
 // 	return 0;
 // }

@@ -16,7 +16,7 @@
 
 
 #define MAX 1024
-#define PORT 8000
+#define PORT 8082
 #define SA struct sockaddr
 #define Server_handle 100
 #define thread_handling 5
@@ -75,6 +75,7 @@ void  *communicate(void * client){
 			//free(isClient);
 			int sign = 0;
 			char userClientId[MAX];
+			int myUserId = -1;
 			while(1){
 				bzero(readBuffer,MAX);
 				if(read(confd, readBuffer, sizeof(readBuffer))){
@@ -193,9 +194,10 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "Username", &username);
 							json_object_object_get_ex(parsed_json, "Password", &password);
 							strcpy(userClientId, signIn(json_object_get_string(username), json_object_get_string(password)));
-
+							myUserId = cvtChar2Int(userClientId);
 							if (strcmp(userClientId, "-1") != 0)
 							{
+								printf("UserId2: %s\n", userClientId);
 								/* code */
 								if(write(confd, "222 Login Success", strlen("222 Login Success"))){
 									printf("Sending to client: 218 Login Success\n");
@@ -249,6 +251,7 @@ void  *communicate(void * client){
 								printf("Error when getting file for GET LOCATION\n");
 								break;
 							};
+
 							
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
@@ -285,6 +288,7 @@ void  *communicate(void * client){
 
 							bzero(writeBuffer, MAX);
 
+
 							while(1) {
 								if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
 								{
@@ -310,7 +314,7 @@ void  *communicate(void * client){
 								printf("Sending 241 GET Location error\n");
 								break;
 							}
-							
+
 							FILE* file = fopen("sensorType.json", "w+");
 							if(getType(file) == 1){
 								printf("Get file for getType success\n");
@@ -318,6 +322,7 @@ void  *communicate(void * client){
 								printf("Error when get file for GET TYPE\n");
 								break;
 							};
+
 							
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
@@ -390,8 +395,9 @@ void  *communicate(void * client){
 							parsed_json = json_tokener_parse(readBuffer);
 
 							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
+
 							
-							if(getTypeByLocation(file, json_object_get_string(locationID)) == 1){
+							if(getTypeByRegister(file,myUserId ,json_object_get_string(locationID)) == 1){
 								printf("Get file for getTypeByLocation success\n");
 							} else {
 								printf("GET file for getTypeByLocation error\n");
@@ -436,7 +442,7 @@ void  *communicate(void * client){
 									break;
 								}
 							} 
-							remove(file);
+							// remove(file);
 						} else if (strncmp(readBuffer, "ADD REGISTER", 12) == 0){
 							/* code */
 							if(write(confd, "231 Add register OK", strlen("231 Add register OK"))){
@@ -462,7 +468,7 @@ void  *communicate(void * client){
 
 							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
 							json_object_object_get_ex(parsed_json, "TypeId", &typeID);
-							if(registerInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID)) == 1) {
+							if(registerInfo(myUserId, json_object_get_string(locationID), json_object_get_string(typeID)) == 1) {
 								write(confd, "244 Add Success", strlen("244 Add Success"));
 								printf("Sending to client: 244 Add Success");
 							} else {
@@ -495,7 +501,7 @@ void  *communicate(void * client){
 
 							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
 							json_object_object_get_ex(parsed_json, "TypeId", &typeID);
-							if(deleteRegisterInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID)) == 1) {
+							if(deleteRegisterInfo(myUserId, json_object_get_string(locationID), json_object_get_string(typeID)) == 1) {
 								if(write(confd, "246 Delete Success", strlen("246 Delete Success"))){
 									printf("Sending to client: 246 Delete Success");
 								} else {
@@ -539,7 +545,7 @@ void  *communicate(void * client){
 
 							FILE* file = fopen("getInformationSensor.json", "w+");
 
-							switch(*(json_object_get_string(typeTime) + 9))
+							switch(json_object_get_string(typeTime)[0])
 							{
 								case 'D':
 									getInfoByDay(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
@@ -595,6 +601,7 @@ void  *communicate(void * client){
 								* Duyet mang type lay value, ghi ra file json
 								* Gui file json
 								*/
+								fakeData();
 								if(write(confd, "252 Get Info Sensor now OK", strlen("252 Get Info Sensor now OK"))){
 									printf("Sending to client: 252 Get Info Sensor now OK\n");
 								} else {
@@ -620,8 +627,9 @@ void  *communicate(void * client){
 								fprintf(file,"[\n");
 								int typeList[SENSOR_MAX];
 								int len;
-								getTypeByUser(typeList, &len, userClientId, locationId);
+								getTypeByUser(typeList, &len, myUserId, locationId);
 								for (int i = 0; i < len; i ++) {
+									printf("{\"TypeId\": %d, \"Value\": %s}", typeList[i], current_values[cvtChar2Int(locationId)][typeList[i]]);
 									fprintf(file, "{\"TypeId\": %d, \"Value\": %s}", typeList[i], current_values[cvtChar2Int(locationId)][typeList[i]]);
 									if (i < len - 1) fprintf(file, ",\n");
  								}
@@ -636,7 +644,7 @@ void  *communicate(void * client){
 								bzero(writeBuffer, MAX);
 								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 								if(write(confd, writeBuffer, strlen(writeBuffer))){
-									printf("Sending to client: Filesize : %d", size);
+									printf("Sending to client: Filesize : %d\n", size);
 								} else {
 									printf("Sending Filesize error\n");
 									break;
