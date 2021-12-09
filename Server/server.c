@@ -200,7 +200,7 @@ void  *communicate(void * client){
 								printf("UserId2: %s\n", userClientId);
 								/* code */
 								if(write(confd, "222 Login Success", strlen("222 Login Success"))){
-									printf("Sending to client: 218 Login Success\n");
+									printf("Sending to client: 222 Login Success\n");
 								} else {
 									printf("Sending 218 Login Success error\n");
 									break;
@@ -209,7 +209,7 @@ void  *communicate(void * client){
 								sign = 1;
 							} else {
 								if(write(confd, "421 Wrong Account", strlen("421 Wrong Account"))){
-									printf("Sending to client: 407 Wrong Account");
+									printf("Sending to client: 421 Wrong Account");
 								} else {
 									printf("Sending Wrong Account error\n");
 									break;
@@ -445,10 +445,10 @@ void  *communicate(void * client){
 							// remove(file);
 						} else if (strncmp(readBuffer, "ADD REGISTER", 12) == 0){
 							/* code */
-							if(write(confd, "231 Add register OK", strlen("231 Add register OK"))){
-								printf("Sending to client: 231 Add register OK");
+							if(write(confd, "243 Add register OK", strlen("243 Add register OK"))){
+								printf("Sending to client: 243 Add register OK");
 							} else {
-								printf("Sending 231 Add register error\n");
+								printf("Sending 243 Add register error\n");
 								break;
 							}
 							
@@ -717,7 +717,7 @@ void  *communicate(void * client){
 				if(read(confd, readBuffer, sizeof(readBuffer))){
 					printf("From Client: %s\n",readBuffer);
 				} else {
-					printf("Error in reading json Sensor : \n");
+					printf("400 Get info error\n");
 					break;
 				}
 
