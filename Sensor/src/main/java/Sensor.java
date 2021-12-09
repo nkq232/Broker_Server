@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class Sensor {
-    public static final int SERVER_PORT = 6060;
+    public static final int SERVER_PORT = 8082;
     private final Socket socket;
     private final String location;
     private final String type;
@@ -39,14 +39,16 @@ public class Sensor {
             OutputStream out = new DataOutputStream(socket.getOutputStream());
             InputStream in = new DataInputStream(socket.getInputStream());
 
-            sendOneMessage(out, in, "SENSOR HELO Server");
+            sendOneMessage(out, in, "SENSOR HELO Broker");
             Random rd = new Random();
+
             while (true) {
                 sendOneMessage(out, in, "INFO");
                 JSONObject info = new JSONObject();
+                String value_str = String.valueOf(25 + rd.nextInt(5));
                 info.put("TypeID", type);
                 info.put("LocationID", location);
-                info.put("Value", 25 + rd.nextInt(5));
+                info.put("Value", value_str);
                 sendOneMessage(out, in, info.toString('\t'));
                 TimeUnit.SECONDS.sleep(5);
             }
