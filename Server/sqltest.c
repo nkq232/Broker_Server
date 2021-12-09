@@ -683,60 +683,60 @@ int insertValueFromSensor(char *typeID, char* locationID, char* value) {
 }
 
 
-int main(){
-    FILE *daydata = fopen("daydata.json","w");
-    if(daydata == NULL)
-    {
-      printf("Error!");   
-      exit(1);             
-    }
-    int n1 = getInfoByDay(daydata, "3", "15", "2021-11-01");
-    if (n1 < 0) {
-        printf("Err");
-        exit(1);
-    }
+// int main(){
+//     FILE *daydata = fopen("daydata.json","w");
+//     if(daydata == NULL)
+//     {
+//       printf("Error!");   
+//       exit(1);             
+//     }
+//     int n1 = getInfoByDay(daydata, "3", "15", "2021-11-01");
+//     if (n1 < 0) {
+//         printf("Err");
+//         exit(1);
+//     }
 
 
-    FILE *monthdata = fopen("monthdata.json","w");
-    if(monthdata == NULL)
-    {
-      printf("Error!");   
-      exit(1);             
-    }
-    int n2 = getInfoByMonth(monthdata, "3", "15", "2021-11-01");
-    if (n2 < 0) {
-        printf("Err");
-        exit(1);
-    }
+//     FILE *monthdata = fopen("monthdata.json","w");
+//     if(monthdata == NULL)
+//     {
+//       printf("Error!");   
+//       exit(1);             
+//     }
+//     int n2 = getInfoByMonth(monthdata, "3", "15", "2021-11-01");
+//     if (n2 < 0) {
+//         printf("Err");
+//         exit(1);
+//     }
 
 
-    FILE *yeardata = fopen("yeardata.json","w");
-    if(yeardata == NULL)
-    {
-      printf("Error!");   
-      exit(1);             
-    }
-    int n3 = getInfoByYear(yeardata, "3", "15", "2021-11-01");
-    if (n3 < 0) {
-        printf("Err");
-        exit(1);
-    }
+//     FILE *yeardata = fopen("yeardata.json","w");
+//     if(yeardata == NULL)
+//     {
+//       printf("Error!");   
+//       exit(1);             
+//     }
+//     int n3 = getInfoByYear(yeardata, "3", "15", "2021-11-01");
+//     if (n3 < 0) {
+//         printf("Err");
+//         exit(1);
+//     }
 
-    FILE *location = fopen("location.json", "w");
-    FILE *sensor = fopen("sensor.json", "w");
-    FILE *sensorByLocation = fopen("sensorbylocation.json", "w");
+//     FILE *location = fopen("location.json", "w");
+//     FILE *sensor = fopen("sensor.json", "w");
+//     FILE *sensorByLocation = fopen("sensorbylocation.json", "w");
 
-    getLocation(location);
-    getType(sensor);
-    getTypeByLocation(sensorByLocation, "15");
+//     getLocation(location);
+//     getType(sensor);
+//     getTypeByLocation(sensorByLocation, "15");
 
-    printf("%d\n", signUp("Tuan", "Tuan2"));
-    //fclose(daydata);
+//     printf("%d\n", signUp("Tuan", "Tuan2"));
+//     //fclose(daydata);
 
-    printf("%d\n", insertValueFromSensor("1", "7", "30"));
+//     printf("%d\n", insertValueFromSensor("1", "7", "30"));
 
-	return 0;
-}
+// 	return 0;
+// }
 
 
 

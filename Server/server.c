@@ -11,6 +11,7 @@
 #include "threadQueue.h"
 #include "threadQueue.c"
 #include <json-c/json.h>
+#include "sqltest.c"
 
 #define MAX 1024
 #define PORT 8082
@@ -337,16 +338,16 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "TypeTime", &typeTime);
 
 							
-							if (typeTime == 'Now')
-							{
-								/* code */
-								char result[MAX];
-								strcpy(result,getInfoByNow(json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date)));
-								bzero(writeBuffer, MAX);
-								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Value\": %s}", result); 
-								write(confd, writeBuffer, strlen(writeBuffer));
-								free(result);
-							} else {
+							// if (typeTime == 'Now')
+							// {
+							// 	/* code */
+							// 	char result[MAX];
+							// 	strcpy(result,getInfoByNow(json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date)));
+							// 	bzero(writeBuffer, MAX);
+							// 	snprintf(writeBuffer, sizeof(writeBuffer), "{\"Value\": %s}", result); 
+							// 	write(confd, writeBuffer, strlen(writeBuffer));
+							// 	free(result);
+							// } else {
 
 								FILE* file = fopen("getInformationSensor.json", "w");
 
@@ -358,10 +359,8 @@ void  *communicate(void * client){
 									case 'M':
 										getInfoByMonth(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 										break;
-									case 'Y':
-										getInfoByYear(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
-										break;
 									default:
+										getInfoByYear(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 										
 								}
 								/* code */	
@@ -396,7 +395,7 @@ void  *communicate(void * client){
 
 								remove(file);
 							}
-						} else {
+						else {
 							write(confd, "Syntax error", strlen("Syntax error"));
 							printf("Sending to client: Syntax error");
 						}
@@ -410,48 +409,49 @@ void  *communicate(void * client){
 		if (isSensor) {
 			// Xy ly giao thuc sensor
 			free(isSensor);
-			bzero(readBuffer, MAX);
-			read(confd, readBuffer, sizeof(readBuffer));
-			printf("Recieving Message From Sensor: %s\n" ,readBuffer);
-			write(confd, "501 Info OK", strlen("501 Info OK"));
-			printf("Sending to Sensor: 501 Info OK\n");
-			bzero(readBuffer, MAX);
-			// char id[50], type[50], locationID[50], value[50];
-			struct json_object *parsed_json;
-			struct json_object *type;
-			struct json_object *locationID;
-			struct json_object *value;
-						
-			read(confd, readBuffer, sizeof(readBuffer));
+			while(1) {
+				bzero(readBuffer, MAX);
+				read(confd, readBuffer, sizeof(readBuffer));
+				printf("Recieving Message From Sensor: %s\n" ,readBuffer);
+				write(confd, "501 Info OK", strlen("501 Info OK"));
+				printf("Sending to Sensor: 501 Info OK\n");
+				bzero(readBuffer, MAX);
+				// char id[50], type[50], locationID[50], value[50];
+				struct json_object *parsed_json;
+				struct json_object *type;
+				struct json_object *locationID;
+				struct json_object *value;
+							
+				read(confd, readBuffer, sizeof(readBuffer));
 
-			parsed_json = json_tokener_parse(readBuffer);
+				parsed_json = json_tokener_parse(readBuffer);
 
-			json_object_object_get_ex(parsed_json, "TypeID", &type);
-			json_object_object_get_ex(parsed_json, "LocationID", &locationID);
-			json_object_object_get_ex(parsed_json, "Value", &value);
+				json_object_object_get_ex(parsed_json, "TypeID", &type);
+				json_object_object_get_ex(parsed_json, "LocationID", &locationID);
+				json_object_object_get_ex(parsed_json, "Value", &value);
 
-			write(confd, "502 Get info success", strlen("502 Get info success"));
-			printf("Sending to sensor: 502 Get info success");
-
-			//Chưa có hàm
-
-			if (insertValueFromSensor(json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(value)))
-			{
-				/* code */
 				write(confd, "502 Get info success", strlen("502 Get info success"));
 				printf("Sending to sensor: 502 Get info success");
-			} else {
-				write(confd, "400 Get info error", strlen("400 Get info error"));
-				printf("Sending to sensor: 400 Get info error");
-			}
-			escape = 1;
 
+				//Chưa có hàm
+
+				if (insertValueFromSensor(json_object_get_string(type), json_object_get_string(locationID), json_object_get_string(value)))
+				{
+					/* code */
+					write(confd, "502 Get info success", strlen("502 Get info success"));
+					printf("Sending to sensor: 502 Get info success");
+				} else {
+					write(confd, "400 Get info error", strlen("400 Get info error"));
+					printf("Sending to sensor: 400 Get info error");
+				}
+				escape = 1;
+				if (escape){
+					/* code */
+					break;
+				}
+			}
 		}
-		if (escape)
-		{
-			/* code */
-			break;
-		}
+		
 	}
 	return NULL;
 }
