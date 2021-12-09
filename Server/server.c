@@ -63,8 +63,8 @@ void  *communicate(void * client){
 				if (strncmp(readBuffer, "QUIT", 4) == 0)
 				{
 						/* code */
-						write(confd, "500 bye", strlen("500 bye"));
-						printf("Sending to client: 500 bye");
+						write(confd, "999 bye", strlen("999 bye"));
+						printf("Sending to client: 999 bye");
 						break;
 				} else {
 					if (!sign){
@@ -91,7 +91,7 @@ void  *communicate(void * client){
 							json_object_object_get_ex(parsed_json, "Password", &password);
 							if(signUp(json_object_get_string(username), json_object_get_string(password)) == 1) {
 								write(confd, "219 Register Success", strlen("219 Register Success"));
-								printf("Sending to client: 219 Register Success");
+								printf("Sending to client: 212 Register Success");
 							} else {
 								write(confd, "413 Username Existed", strlen("413 Username Existed"));
 								printf("Sending to client: 413 Username Existed");
@@ -123,10 +123,10 @@ void  *communicate(void * client){
 							if (userClientId != '-1')
 							{
 								/* code */
-								write(confd, "218 Login Success", strlen("218 Login Success"));
+								write(confd, "222 Login Success", strlen("222 Login Success"));
 								printf("Sending to client: 218 Login Success");
 							} else {
-								write(confd, "407 Wrong Account", strlen("407 Wrong Account"));
+								write(confd, "421 Wrong Account", strlen("421 Wrong Account"));
 								printf("Sending to client: 407 Wrong Account");
 							}
 
@@ -136,14 +136,22 @@ void  *communicate(void * client){
 							printf("Sending to client: Syntax error");
 						}
 					} else {
-						if (strncmp(readBuffer, "GET LOCATION", 12) == 0)
+						if (strncmp(readBuffer, "SIGN OUT", 8) == 0)
 						{
 							/* code */
-							write(confd, "223 GET Location OK", strlen("223 GET Location OK"));
-							printf("Sending to client: 223 GET Location OK");
-							FILE* file = fopen("location.txt", "w");
+							sign = 0;
+							write(confd, "230 Sign out OK", strlen("230 Sign out OK"));
+							printf("Sending to client: 230 Sign out OK");
+						} else if (strncmp(readBuffer, "GET LOCATION", 12) == 0)
+						{
+							/* code */
+							write(confd, "240 GET Location OK", strlen("240 GET Location OK"));
+							printf("Sending to client: 240 GET Location OK");
+							FILE* file = fopen("location.json", "w");
 							getLocation(file);
 							
+							bzero(readBuffer, MAX);
+							read(confd, readBuffer, sizeof(readBuffer));
 							/* code */
 							size_t a;
 
@@ -155,6 +163,9 @@ void  *communicate(void * client){
 							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 							write(confd, writeBuffer, strlen(writeBuffer));
 							printf("Sending to client: Filesize : %d", size);
+
+							bzero(readBuffer, MAX);
+							read(confd, readBuffer, sizeof(readBuffer));
 
 							bzero(writeBuffer, MAX);
 
@@ -173,11 +184,14 @@ void  *communicate(void * client){
 						} else if (strncmp(readBuffer, "GET TYPE", 8) == 0)
 						{
 							/* code */
-							write(confd, "224 GET Type Sensor OK", strlen("223 GET Type Sensor OK"));
-							printf("Sending to client: 223 GET Location OK");
-							FILE* file = fopen("sensorType.txt", "w");
+							write(confd, "241 GET Type Sensor OK", strlen("241 GET Type Sensor OK"));
+							printf("Sending to client: 241 GET Location OK");
+							FILE* file = fopen("sensorType.json", "w");
 							getType(file);
 							
+							bzero(readBuffer, MAX);
+							read(confd, readBuffer, sizeof(readBuffer));
+
 							/* code */
 							size_t a;
 
@@ -189,6 +203,9 @@ void  *communicate(void * client){
 							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 							write(confd, writeBuffer, strlen(writeBuffer));
 							printf("Sending to client: Filesize : %d", size);
+
+							bzero(readBuffer, MAX);
+							read(confd, readBuffer, sizeof(readBuffer));
 
 							bzero(writeBuffer, MAX);	
 
@@ -207,9 +224,9 @@ void  *communicate(void * client){
 						} else if (strncmp(readBuffer, "GET INFO REGISTER", 17) == 0)
 						{
 							/* code */
-							write(confd, "230 Info Register OK", strlen("230 Info Register OK"));
-							printf("Sending to client: 230 Info Register OK");
-							FILE* file = fopen("infoRegister.txt", "w");
+							write(confd, "242 Info Register OK", strlen("242 Info Register OK"));
+							printf("Sending to client: 242 Info Register OK");
+							FILE* file = fopen("infoRegister.json", "w");
 							bzero(readBuffer, MAX);
 							read(confd, readBuffer, sizeof(readBuffer));
 
@@ -228,11 +245,14 @@ void  *communicate(void * client){
 							fseek(file, 0, SEEK_END);
 							int size = ftell(file); 
 							fseek(file, 0, SEEK_SET);
-
+							
 							bzero(writeBuffer, MAX);
 							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 							write(confd, writeBuffer, strlen(writeBuffer));
 							printf("Sending to client: Filesize : %d", size);
+
+							bzero(readBuffer, MAX);
+							read(confd, readBuffer, sizeof(readBuffer));
 
 							bzero(writeBuffer, MAX);
 
@@ -264,17 +284,17 @@ void  *communicate(void * client){
 
 							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
 							json_object_object_get_ex(parsed_json, "TypeId", &typeID);
-							registerInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID));
-
-							
+							if(registerInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID))) {
+								write(confd, "244 Add Success", strlen("244 Add Success"));
+								printf("Sending to client: 244 Add Success");
+							}
 							
 							/* code */
-							remove(file);
 						} else if (strncmp(readBuffer, "DELETE REGISTER", 15) == 0)
 						{
 							/* code */
-							write(confd, "232 Delete register OK", strlen("232 Delete register OK"));
-							printf("Sending to client: 232 Delete register OK");
+							write(confd, "245 Delete register OK", strlen("245 Delete register OK"));
+							printf("Sending to client: 245 Delete register OK");
 							
 							bzero(readBuffer, MAX);
 							read(confd, readBuffer, sizeof(readBuffer));
@@ -287,14 +307,16 @@ void  *communicate(void * client){
 
 							json_object_object_get_ex(parsed_json, "LocationId", &locationID);
 							json_object_object_get_ex(parsed_json, "TypeId", &typeID);
-							deleteRegisterInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID));
+							if(deleteRegisterInfo(userClientId, json_object_get_string(locationID), json_object_get_string(typeID))) {
+								write(confd, "246 Delete Success", strlen("246 Delete Success"));
+								printf("Sending to client: 246 Delete Success");
+							}
 							
-							remove(file);
 						} else if (strncmp(readBuffer, "GET INFO SENSOR", 15) == 0)
 						{
 							/* code */
-							write(confd, "2 Get Info Sensor OK", strlen("2 Get Info Sensor OK"));
-							printf("Sending to client: 2 Get Info Sensor OK");
+							write(confd, "251 Get Info Sensor OK", strlen("251 Get Info Sensor OK"));
+							printf("Sending to client: 251 Get Info Sensor OK");
 							
 							
 							
@@ -326,17 +348,17 @@ void  *communicate(void * client){
 								free(result);
 							} else {
 
-								FILE* file = fopen("getInformationSensor.txt", "w");
+								FILE* file = fopen("getInformationSensor.json", "w");
 
-								switch(typeTime)
+								switch(*(json_object_get_string(typeTime) + 9))
 								{
-									case 'Day':
+									case 'D':
 										getInfoByDay(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 										break;
-									case 'Month':
+									case 'M':
 										getInfoByMonth(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 										break;
-									case 'Year':
+									case 'Y':
 										getInfoByYear(file, json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(date));
 										break;
 									default:
@@ -354,6 +376,9 @@ void  *communicate(void * client){
 								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
 								write(confd, writeBuffer, strlen(writeBuffer));
 								printf("Sending to client: Filesize : %d", size);
+
+								bzero(readBuffer, MAX);
+								read(confd, readBuffer, sizeof(readBuffer));
 
 								bzero(writeBuffer, MAX);
 
@@ -385,6 +410,7 @@ void  *communicate(void * client){
 		if (isSensor) {
 			// Xy ly giao thuc sensor
 			free(isSensor);
+			bzero(readBuffer, MAX);
 			read(confd, readBuffer, sizeof(readBuffer));
 			printf("Recieving Message From Sensor: %s\n" ,readBuffer);
 			write(confd, "501 Info OK", strlen("501 Info OK"));
@@ -405,11 +431,19 @@ void  *communicate(void * client){
 			json_object_object_get_ex(parsed_json, "Value", &value);
 
 			write(confd, "502 Get info success", strlen("502 Get info success"));
-			printf("Sending to client: 502 Get info success");
+			printf("Sending to sensor: 502 Get info success");
 
 			//Chưa có hàm
 
-
+			if (insertValueFromSensor(json_object_get_string(typeID), json_object_get_string(locationID), json_object_get_string(value)))
+			{
+				/* code */
+				write(confd, "502 Get info success", strlen("502 Get info success"));
+				printf("Sending to sensor: 502 Get info success");
+			} else {
+				write(confd, "400 Get info error", strlen("400 Get info error"));
+				printf("Sending to sensor: 400 Get info error");
+			}
 			escape = 1;
 
 		}
