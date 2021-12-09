@@ -690,6 +690,7 @@ int deleteRegisterInfo(int userID, char *locationID, char *typeID) {
 
     char test_query[10001];
     snprintf(test_query, sizeof(test_query), "DELETE FROM Register WHERE UserId = %d AND LocationId = %s  AND TypeId = %s;", userID, locationID, typeID);
+    printf("\n%s\n",test_query);
 
     if(mysql_query(con, test_query)) {
         fprintf(stderr, "%s\n", mysql_error(con));
