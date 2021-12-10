@@ -20,6 +20,7 @@
 #define SA struct sockaddr
 #define Server_handle 100
 #define thread_handling 5
+#define timeUpdate 1000
 
 pthread_t sourceOfThread[thread_handling];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -790,6 +791,7 @@ void  *communicate(void * client){
 }
 
 
+
 void* handlingFunction(void* args) {
 	while(1) {
 		int *client;
@@ -811,6 +813,9 @@ void* handlingFunction(void* args) {
 };
 int main(){
 	int sockfd, confd, len;
+
+	//Update Database
+	
 
 	// Handling quá tải server khi với mỗi client thì tạo 1 thread
 	// Tạo ra vùng chứa thread với số lượng limit
@@ -855,7 +860,7 @@ int main(){
 		printf("Server Listening .. \n");
 	}
 	len = sizeof(cli);
-
+	
 	while (1) {
 		printf("Waiting for connection ...\n");
 		confd = accept(sockfd, (SA*)&cli, &len);
@@ -880,6 +885,9 @@ int main(){
 	close(sockfd);
 	return 0;
 }
+
+
+
 
 int sendingFile(int confd, FILE* file, char* readBuffer, char* writeBuffer, char* errorDetection) {
 	size_t a;

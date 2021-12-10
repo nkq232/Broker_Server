@@ -796,7 +796,30 @@ int insertValueFromSensor(char *typeID, char* locationID, char* value) {
 }
 
 // update du lieu tu mang
-int updateDatabase();
+int updateDatabase() {
+    char typeID[100];
+    char locationID[100];
+    for (int i = 0; i < LOCATION_MAX; ++i)
+    {
+        /* code */
+        for (int j = 0; j < LOCATION_MAX; ++j)
+        {
+            /* code */
+            if (strcmp(current_values[i][j], "") != 0)
+            {
+                /* code */
+                sprintf(typeID, "%d", j);
+                sprintf(locationID, "%d", i);
+                
+                insertValueFromSensor(typeID, locationID, current_values[i][j]);
+                
+                bzero(typeID, 100);
+                bzero(locationID, 100);
+            }
+        }
+    }
+    return 1;
+}
 // int main(){
     
 
