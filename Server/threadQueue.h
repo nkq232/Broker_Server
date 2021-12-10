@@ -10,10 +10,10 @@ struct Node {
 
 char* current_values[LOCATION_MAX][SENSOR_MAX];
 
-void fakeData() {
+void initDataTable() {
 	for (int i = 0; i < LOCATION_MAX; i ++)
 		for (int j = 0; j < SENSOR_MAX; j++)
-			current_values[i][j] = "1.2";
+			current_values[i][j] = "...";
 }
 
 

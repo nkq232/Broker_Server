@@ -1,5 +1,0 @@
-[
-{"TypeID": 2, "TypeName": "Humidity", "TypeValue": "%"},
-{"TypeID": 5, "TypeName": "Wind", "TypeValue": "km/h"},
-{"TypeID": 7, "TypeName": "Possibility Of Rain", "TypeValue": "%"}
-]

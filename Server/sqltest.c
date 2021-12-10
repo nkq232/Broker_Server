@@ -733,7 +733,10 @@ int getTypeByUser(int type[], int*len, int userID, char* locationID) {
     MYSQL_RES *result = mysql_store_result(con);
 
     if (result == NULL) {
+        printf("Nothing in db");
         fprintf(stderr, "%s\n", mysql_error(con));
+        *len = 0;
+        printf("Nothing in db");
         return -1;
     }
 
@@ -746,12 +749,12 @@ int getTypeByUser(int type[], int*len, int userID, char* locationID) {
     while ((row = mysql_fetch_row(result)))
     {
         int n = row[0] ? cvtChar2Int(row[0]) : -1;
+        printf("\n%d\n",i);
         type[i] = n;
         i++;
     }
+
     *len = i;
-
-
 
     mysql_free_result(result);
     mysql_close(con);
