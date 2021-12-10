@@ -1,6 +1,3 @@
 [
-{"TypeID": 8, "TypeName": "Lightning", "TypeValue": "%"},
-{"TypeID": 6, "TypeName": "Cloud cover", "TypeValue": "Okta"},
-{"TypeID": 3, "TypeName": "Amount of rain", "TypeValue": "mm/12h"},
-{"TypeID": 2, "TypeName": "Humidity", "TypeValue": "%"}
+
 ]

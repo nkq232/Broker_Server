@@ -398,9 +398,9 @@ void  *communicate(void * client){
 
 							
 							if(getTypeByRegister(file,myUserId ,json_object_get_string(locationID)) == 1){
-								printf("Get file for getTypeByLocation success\n");
+								printf("Get file for getTypeByRegister success\n");
 							} else {
-								printf("GET file for getTypeByLocation error\n");
+								printf("GET file for getTypeByRegister error\n");
 								break;
 							};
 							
@@ -623,17 +623,21 @@ void  *communicate(void * client){
 								json_object_object_get_ex(parsed_json, "LocationId", &locationId);
 
 								FILE *file = fopen("infoNow.json", "w+");
-								fprintf(file,"[\n");
 								int typeList[SENSOR_MAX];
 								int len;
 
 								int locationIdInt = cvtChar2Int(json_object_get_string(locationId));
 								
-								getTypeByUser(typeList, &len, myUserId, json_object_get_string(locationId));
+								if(getTypeByUser(typeList, &len, myUserId, json_object_get_string(locationId)) < 0) {
+									len = 0;
+								}
 								printf("\nLen: %d\n", len);
+
+								fprintf(file,"[\n");
 								for (int i = 0; i < len; i ++) {
-									printf("{\"TypeID\": %d, \"Value\": %s}", typeList[i], current_values[locationIdInt][typeList[i]]);
-									fprintf(file, "{\"TypeID\": %d, \"Value\": %s}", typeList[i], current_values[locationIdInt][typeList[i]]);
+									char * tempVlue = (strcmp(current_values[locationIdInt][typeList[i]],"") == 0) ? current_values[locationIdInt][typeList[i]] : "\"...\"";
+									printf("{\"TypeID\": %d, \"Value\": %s}", typeList[i], tempVlue);
+									fprintf(file, "{\"TypeID\": %d, \"Value\": %s}", typeList[i], tempVlue);
 									if (i < len - 1) fprintf(file, ",\n");
  								}
 								fprintf(file,"\n]");
@@ -677,7 +681,7 @@ void  *communicate(void * client){
 										break;
 									}
 								} 
-								// remove(file);
+								remove(file);
 								printf("Sending file to client complete\n");
 							}
 						else {
@@ -796,6 +800,7 @@ int main(){
 	// Handling quá tải server khi với mỗi client thì tạo 1 thread
 	// Tạo ra vùng chứa thread với số lượng limit
 	// Update lại vùng khi có client connect và disconnect
+	initDataTable();
 	for (int i = 0; i < thread_handling; ++i)
 	{
 		/* code */
