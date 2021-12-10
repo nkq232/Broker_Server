@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class Sensor {
-    public static final int SERVER_PORT = 8082;
+    public static final int SERVER_PORT = 8086;
     private final Socket socket;
     private final String location;
     private final String type;
