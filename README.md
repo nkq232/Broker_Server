@@ -2,8 +2,7 @@
 Big Task
 
 
-Update token:
-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
+
 
 Chạy Client:
 
