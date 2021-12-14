@@ -13,24 +13,8 @@ char* current_values[LOCATION_MAX][SENSOR_MAX];
 void initDataTable() {
 	for (int i = 0; i < LOCATION_MAX; i ++)
 		for (int j = 0; j < SENSOR_MAX; j++)
-			current_values[i][j] = "...";
+			current_values[i][j] = "!";
 }
-
-
-
-
-// struct tempNode {
-// 	int typeOfNode;		// 0 if sensor, 1 if client
-// 	char *nodeID;		// ID of sensor or client depend on typeOfNode
-// 	int* confd;
-	
-// 	char *locationID;	// Only sensor
-// 	char *value;		// Only sensor
-// 	struct tempNode* next;
-
-// };
-
-
 
 /**
 * Y tuong khi client goi getInfoNow
@@ -41,6 +25,5 @@ void initDataTable() {
 typedef struct Node nodex;
 
 int* dequeue();
-void enqueue();
 
 #endif

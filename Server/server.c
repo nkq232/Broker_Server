@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <netdb.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
 #include "threadQueue.h"
@@ -13,14 +11,11 @@
 #include <json-c/json.h>
 #include "sqltest.c"
 
-
-
 #define MAX 1024
 #define PORT 8086
 #define SA struct sockaddr
-#define Server_handle 100
-#define thread_handling 5
-#define timeUpdate 1000
+#define Server_handle 600
+#define thread_handling 600
 
 pthread_t sourceOfThread[thread_handling];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -32,8 +27,6 @@ void  *communicate(void * client){
 	free(client);
 
 	char readBuffer[MAX], writeBuffer[MAX];
-	int n;
-	int check_read;
 	short isClient = 0;
 	short isSensor = 0;
 	int escape = 0;
@@ -49,10 +42,7 @@ void  *communicate(void * client){
 				printf("Sending 200 Hello Client error\n");
 				break;
 			}
-			
-		} 
-		
-		else if(strncmp(readBuffer, "SENSOR HELO Broker", 18) == 0){
+		} else if(strncmp(readBuffer, "SENSOR HELO Broker", 18) == 0){
 			isSensor = 1;
 			if(write(confd, "500 Hello Sensor", strlen("500 Hello Sensor"))){
 				printf("Sending to sensor: 500 Hello Sensor\n");
@@ -60,7 +50,6 @@ void  *communicate(void * client){
 				printf("Sending 500 Hello Sensor error\n");
 				break;
 			}
-			
 		} else {
 			if(write(confd, "Syntax error", strlen("Syntax error"))){
 				printf("Sending : Syntax error\n");
@@ -68,23 +57,23 @@ void  *communicate(void * client){
 				printf("Cannot Send Syntax error \n");
 				break;
 			}
-			
 		}
 		
 		if (isClient) {
 			//Xu ly giao thuc client
-			//free(isClient);
 			int sign = 0;
 			char userClientId[MAX];
 			int myUserId = -1;
 			while(1){
 				bzero(readBuffer,MAX);
+
 				if(read(confd, readBuffer, sizeof(readBuffer))){
 					printf("From Client: %s\n",readBuffer);
 				} else {
 					printf("Error in Big While(1) : \n");
 					break;
 				}
+
 				if (strncmp(readBuffer, "QUIT", 4) == 0){
 					if (write(confd, "999 bye", strlen("999 bye"))){
 						printf("Sending to client: 999 bye\n");
@@ -102,8 +91,7 @@ void  *communicate(void * client){
 							} else {
 								printf("Sending 210 Sign up error\n");
 								break;
-							} 
-							
+							}
 							
 							if(read(confd, readBuffer, sizeof(readBuffer))){
 								printf("From Client: %s\n",readBuffer);
@@ -118,7 +106,6 @@ void  *communicate(void * client){
 								printf("Sending 211 Account error\n");
 								break;
 							}
-							
 
 							bzero(readBuffer, MAX);
 							if (read(confd, readBuffer, sizeof(readBuffer))){
@@ -145,7 +132,6 @@ void  *communicate(void * client){
 									printf("Sending 212 Register error\n");
 									break;
 								}
-								
 							} else {
 								if(write(confd, "413 Username Existed", strlen("413 Username Existed"))) {
 									printf("Sending to client: 413 Username Existed\n");
@@ -177,7 +163,6 @@ void  *communicate(void * client){
 								printf("Sending 211 Account error\n");
 								break;
 							}
-							
 
 							bzero(readBuffer, MAX);
 							if (!read(confd, readBuffer, sizeof(readBuffer))){
@@ -235,9 +220,7 @@ void  *communicate(void * client){
 								printf("Sending 230 Sign out error\n");
 								break;
 							}
-							
 						} else if (strncmp(readBuffer, "GET LOCATION", 12) == 0) {
-							/* code */
 							if(write(confd, "240 GET Location OK", strlen("240 GET Location OK"))){
 								printf("Sending to client: 240 GET Location OK");
 							} else {
@@ -251,9 +234,8 @@ void  *communicate(void * client){
 							} else {
 								printf("Error when getting file for GET LOCATION\n");
 								break;
-							};
+							}
 
-							
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
 								printf("From Client: %s\n",readBuffer);
@@ -266,18 +248,17 @@ void  *communicate(void * client){
 							size_t a;
 
 							fseek(file, 0, SEEK_END);
-							int size = ftell(file); 
+							long size = ftell(file);
 							fseek(file, 0, SEEK_SET);
 
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %ld}", size);
 							if(write(confd, writeBuffer, strlen(writeBuffer))){
-								printf("Sending to client: Filesize : %d", size);
+								printf("Sending to client: Filesize : %ld", size);
 							} else {
 								printf("Sending file size error\n");
 								break;
 							}
-							
 
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
@@ -289,32 +270,23 @@ void  *communicate(void * client){
 
 							bzero(writeBuffer, MAX);
 
-
 							while(1) {
 								if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
 								{
 									/* code */
 									writeBuffer[a] = '\0';
-									int n = write(confd, writeBuffer,a);
+									long n = write(confd, writeBuffer,a);
 									if (!n){
 										printf("Error when sending file in GET LOCATION");
 										break;
 									}
 								} else {
-									
 									break;
 								}
 							} 
-							remove(file);
+							remove((const char *) file);
 							printf("Sending file to client complete\n");
-							// if (sendingFile(confd, &file, &readBuffer, &writeBuffer, "GET LOCATION")){
-							// 	remove(file);
-							// 	printf("Sending file to client complete\n");
-							// } else {
-							// 	printf("Sending file error at GET LOCATION\n");
-							// }
 						} else if (strncmp(readBuffer, "GET TYPE", 8) == 0){
-							/* code */
 							if(write(confd, "241 GET Type Sensor OK", strlen("241 GET Type Sensor OK"))){
 								printf("Sending to client: 241 GET Type Sensor OK");
 							} else {
@@ -328,9 +300,8 @@ void  *communicate(void * client){
 							} else {
 								printf("Error when get file for GET TYPE\n");
 								break;
-							};
+							}
 
-							
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
 								printf("From Client: %s\n",readBuffer);
@@ -339,22 +310,19 @@ void  *communicate(void * client){
 								break;
 							}
 
-							/* code */
 							size_t a;
-
 							fseek(file, 0, SEEK_END);
-							int size = ftell(file); 
+							long size = ftell(file);
 							fseek(file, 0, SEEK_SET);
 
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %ld}", size);
 							if(write(confd, writeBuffer, strlen(writeBuffer))){
-								printf("Sending to client: Filesize : %d", size);
+								printf("Sending to client: Filesize : %ld", size);
 							} else {
 								printf("Sending file size error\n");
 								break;
 							}
-							
 
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
@@ -364,27 +332,18 @@ void  *communicate(void * client){
 								break;
 							}
 
-							bzero(writeBuffer, MAX);	
-
+							bzero(writeBuffer, MAX);
 							while(1) {
 								if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
 								{
-									/* code */
 									writeBuffer[a] = '\0';
 									write(confd, writeBuffer,a);
 								} else {
 									break;
 								}
 							} 
-							remove(file);
-							// if (sendingFile(confd, &file, &readBuffer, &writeBuffer, "GET TYPE")){
-							// 	remove(file);
-							// 	printf("Sending file to client complete\n");
-							// } else {
-							// 	printf("Sending file error at GET TYPE\n");
-							// }
+							remove((const char *) file);
 						} else if (strncmp(readBuffer, "GET INFO REGISTER", 17) == 0){
-							/* code */
 							if(write(confd, "242 Info Register OK", strlen("242 Info Register OK"))){
 								printf("Sending to client: 242 Info Register OK");
 							} else {
@@ -415,19 +374,19 @@ void  *communicate(void * client){
 							} else {
 								printf("GET file for GET INFO REGISTER error\n");
 								break;
-							};
+							}
 							
 							/* code */
 							size_t a;
 
 							fseek(file, 0L, SEEK_END);
-							int size = ftell(file); 
+							long size = ftell(file);
 							rewind(file);
 							
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %ld}", size);
 							if(write(confd, writeBuffer, strlen(writeBuffer))){
-								printf("Sending to client: Filesize : %d", size);
+								printf("Sending to client: Filesize : %ld", size);
 							} else {
 								printf("Sending file size error\n");
 								break;
@@ -454,14 +413,8 @@ void  *communicate(void * client){
 									
 									break;
 								}
-							} 
-							remove(file);
-							// if (sendingFile(confd, &file, &readBuffer, &writeBuffer, "GET INFO REGISTER")){
-							// 	remove(file);
-							// 	printf("Sending file to client complete\n");
-							// } else {
-							// 	printf("Sending file error at GET INFO REGISTER\n");
-							// }
+							}
+							remove((const char *) file);
 						} else if (strncmp(readBuffer, "ADD REGISTER", 12) == 0){
 							/* code */
 							if(write(confd, "243 Add register OK", strlen("243 Add register OK"))){
@@ -493,10 +446,7 @@ void  *communicate(void * client){
 							} else {
 								printf("Add register error\n");
 							}
-							
-							/* code */
 						} else if (strncmp(readBuffer, "DELETE REGISTER", 15) == 0){
-							/* code */
 							if(write(confd, "245 Delete register OK", strlen("245 Delete register OK"))){
 								printf("Sending to client: 245 Delete register OK");
 							} else {
@@ -528,20 +478,17 @@ void  *communicate(void * client){
 									printf("Sending 246 Delete error\n");
 									break;
 								}
-								
 							} else {
 								printf("Delete register error\n");
 							}	
 						} else if (strcmp(readBuffer, "GET INFO SENSOR") == 0){
-							/* code */
 							if(write(confd, "251 Get Info Sensor OK", strlen("251 Get Info Sensor OK"))){
 								printf("Sending to client: 251 Get Info Sensor OK");
 							} else {
 								printf("Sending 251 Get Info Sensor error\n");
 								break;
 							}
-							
-							
+
 							bzero(readBuffer, MAX);
 							if(read(confd, readBuffer, sizeof(readBuffer))){
 								printf("From Client: %s\n",readBuffer);
@@ -579,13 +526,13 @@ void  *communicate(void * client){
 							size_t a;
 
 							fseek(file, 0, SEEK_END);
-							int size = ftell(file); 
+							long size = ftell(file);
 							fseek(file, 0, SEEK_SET);
 
 							bzero(writeBuffer, MAX);
-							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
+							snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %jd}", size);
 							if(write(confd, writeBuffer, strlen(writeBuffer))){
-								printf("Sending to client: Filesize : %d", size);
+								printf("Sending to client: Filesize : %ld", size);
 							} else {
 								printf("Sending Filesize error\n");
 								break;
@@ -612,13 +559,7 @@ void  *communicate(void * client){
 									break;
 								}
 							}
-							remove(file);
-							// if (sendingFile(confd, &file, &readBuffer, &writeBuffer, "GET INFO SENSOR")){
-							// 	remove(file);
-							// 	printf("Sending file to client complete\n");
-							// } else {
-							// 	printf("Sending file error at GET INFO SENSOR\n");
-							// }
+							remove((const char *) file);
 						} else if (strncmp(readBuffer, "GET INFO SENSOR NOW", 19) == 0) {
 								/**
 								* Tao file json
@@ -656,12 +597,11 @@ void  *communicate(void * client){
 								if(getTypeByUser(typeList, &len, myUserId, json_object_get_string(locationId)) < 0) {
 									len = 0;
 								}
-								printf("\nLen: %d\n", len);
 
 								fprintf(file,"[\n");
 								for (int i = 0; i < len; i ++) {
-									char * tempVlue = (strcmp(current_values[locationIdInt][typeList[i]],"") == 0) ? current_values[locationIdInt][typeList[i]] : "\"...\"";
-									printf("{\"TypeID\": %d, \"Value\": %s}", typeList[i], tempVlue);
+									char tempVlue[50];
+                                    strcpy(tempVlue,current_values[locationIdInt][typeList[i]]);
 									fprintf(file, "{\"TypeID\": %d, \"Value\": %s}", typeList[i], tempVlue);
 									if (i < len - 1) fprintf(file, ",\n");
  								}
@@ -670,13 +610,13 @@ void  *communicate(void * client){
 								size_t a;
 
 								fseek(file, 0, SEEK_END);
-								int size = ftell(file); 
+								long size = ftell(file);
 								fseek(file, 0, SEEK_SET);
 
 								bzero(writeBuffer, MAX);
-								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
+								snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %ld}", size);
 								if(write(confd, writeBuffer, strlen(writeBuffer))){
-									printf("Sending to client: Filesize : %d\n", size);
+									printf("Sending to client: Filesize : %ld\n", size);
 								} else {
 									printf("Sending Filesize error\n");
 									break;
@@ -698,7 +638,7 @@ void  *communicate(void * client){
 									{
 										/* code */
 										writeBuffer[a] = '\0';
-										int n = write(confd, writeBuffer,a);
+										long n = write(confd, writeBuffer,a);
 										if (!n){
 											break;
 										}
@@ -706,7 +646,7 @@ void  *communicate(void * client){
 										break;
 									}
 								} 
-								remove(file);
+								remove((const char *) file);
 								printf("Sending file to client complete\n");
 								// if (sendingFile(confd, &file, &readBuffer, &writeBuffer, "GET INFO SENSOR NOW")){
 								// 	remove(file);
@@ -732,36 +672,40 @@ void  *communicate(void * client){
 		}
 		else if (isSensor) {
 			// Xy ly giao thuc sensor
+            struct json_object *parsed_json;
+            struct json_object *type;
+            struct json_object *locationID;
+            struct json_object *value;
+            bool check = false;
 			while(1) {
 				bzero(readBuffer, MAX);
 				if(read(confd, readBuffer, sizeof(readBuffer))){
 					printf("From Sensor: %s\n",readBuffer);
+                    if (strcmp(readBuffer,"QUIT") == 0){
+                        write(confd, "999 bye", strlen("999 bye"));
+                        break;
+                    }
 				} else {
-					printf("Error in sensor \n");
 					break;
 				}
 				
 				if(write(confd, "501 Info OK", strlen("501 Info OK"))){
 					printf("Sending to Sensor: 501 Info OK\n");
 				} else {
-					printf("Sending 501 Info error\n");
 					break;
 				}
 				
 
 				bzero(readBuffer, MAX);
 				if(read(confd, readBuffer, sizeof(readBuffer))){
-					printf("From Client: %s\n",readBuffer);
+					printf("From Sensor: %s\n",readBuffer);
+                    if (strcmp(readBuffer,"QUIT") == 0){
+                        write(confd, "999 bye", strlen("999 bye"));
+                        break;
+                    }
 				} else {
-					printf("400 Get info error\n");
 					break;
 				}
-
-				struct json_object *parsed_json;
-				struct json_object *type;
-				struct json_object *locationID;
-				struct json_object *value;
-							
 
 				parsed_json = json_tokener_parse(readBuffer);
 
@@ -770,18 +714,26 @@ void  *communicate(void * client){
 				json_object_object_get_ex(parsed_json, "Value", &value);
 				int x = cvtChar2Int(json_object_get_string(locationID));
 				int y = cvtChar2Int(json_object_get_string(type));
-
-				// printf("\nLId: %d, TId: %d\n", x, y);
-				current_values[x][y] = json_object_get_string(value);
+                char *eptr;
+                double z = strtod(json_object_get_string(value),&eptr);
+                char v[10];
+                sprintf(v,"%0.1f",z);
+                current_values[x][y] = v;
+                check = true;
 
 				if(write(confd, "502 Get info success", strlen("502 Get info success"))){
-					printf("Sending to sensor: 502 Get info success");
+					printf("Sending to sensor: 502 Get info success\n");
 				} else {
-					printf("Sending 502 Get info error\n");
 					break;
 				}
-
 			}
+            if (check){
+                int x = cvtChar2Int(json_object_get_string(locationID));
+                int y = cvtChar2Int(json_object_get_string(type));
+                strcpy(current_values[x][y],"!");
+                printf("Disconnect to Sensor LocationId = %d && Sensor Id = %d\n",x,y);
+            }
+            else printf("Disconnect to Sensor LocationId = ? && Sensor Id = ?\n");
 			escape = 1;
 			// communicateWithSensor(confd, &readBuffer, &writeBuffer, &escape);
 		} 
@@ -814,7 +766,7 @@ void* handlingFunction(void* args) {
 			communicate(client);
 		}
 	}
-};
+}
 int main(){
 	int sockfd, confd, len;
 
@@ -868,12 +820,12 @@ int main(){
 	
 	while (1) {
 		printf("Waiting for connection ...\n");
-		confd = accept(sockfd, (SA*)&cli, &len);
+		confd = accept(sockfd, (SA*)&cli, (socklen_t *__restrict)&len);
 		if (confd < 0) {
 		/* code */
 			printf("Accept Failed \n");
 		} else {
-			printf("Accept Client \n");
+			printf("Accept Success \n");
 		} 
 		
 		int *client = malloc(sizeof(int));
@@ -886,55 +838,6 @@ int main(){
 		pthread_mutex_unlock(&mutex);
 	}
 
-	
 	close(sockfd);
 	return 0;
-}
-
-
-
-
-int sendingFile(int confd, FILE* file, char* readBuffer, char* writeBuffer, char* errorDetection) {
-	size_t a;
-	fseek(file, 0, SEEK_END);
-	int size = ftell(file); 
-	fseek(file, 0, SEEK_SET);
-
-	bzero(writeBuffer, MAX);
-	snprintf(writeBuffer, sizeof(writeBuffer), "{\"Filesize\": %d}", size); 
-	write(confd, writeBuffer, strlen(writeBuffer));
-	printf("Sending to client: Filesize : %d", size);
-
-	bzero(readBuffer, MAX);
-	if(read(confd, readBuffer, sizeof(readBuffer))){
-		printf("From Client: %s\n",readBuffer);
-	} else {
-		printf("Error in %s \n", errorDetection);
-		return -1;
-	}
-
-	bzero(writeBuffer, MAX);
-
-	while(1) {
-		if ((a = fread(writeBuffer, sizeof(char), sizeof(writeBuffer), file)) > 0)
-		{
-			/* code */
-			writeBuffer[a] = '\0';
-			int n = write(confd, writeBuffer,a);
-			if (!n){
-				printf("Error sending file in %s\n", errorDetection);
-				return -1;
-			}
-		} else {
-			remove(file);
-			printf("Sending file to client complete\n");
-			return 1;
-		}
-	}
-	return 1; 
-}
-void communicateWithClient(int confd, char* readBuffer, char* writeBuffer, int escape, int isClient){
-}
-
-void communicateWithSensor(int confd, char* readBuffer, char* writeBuffer, int escape){
 }
