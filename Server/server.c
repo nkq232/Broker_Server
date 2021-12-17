@@ -70,7 +70,7 @@ void  *communicate(void * client){
 				if(read(confd, readBuffer, sizeof(readBuffer))){
 					printf("From Client: %s\n",readBuffer);
 				} else {
-					printf("Error in Big While(1) : \n");
+					printf("Disconnect to Client : \n");
 					break;
 				}
 
@@ -767,6 +767,21 @@ void* handlingFunction(void* args) {
 		}
 	}
 }
+
+void* updateToDb(void* args) {
+    while (1){
+        sleep(INTERVAL_UPDATE);
+        for(int i=1; i<LOCATION_MAX; i++)
+            for(int j=1; j<SENSOR_MAX; j++)
+                if (strcmp(current_values[i][j],"!") != 0) {
+                    if (insertValue(i,j,current_values[i][j]) == -1) {
+                        printf("Insert Error LocationId = %d TypeId = %d\n",i,j);
+                    }
+                }
+        printf("Complete Update!!!\n");
+    }
+    return NULL;
+}
 int main(){
 	int sockfd, confd, len;
 
@@ -777,6 +792,8 @@ int main(){
 	// Tạo ra vùng chứa thread với số lượng limit
 	// Update lại vùng khi có client connect và disconnect
 	initDataTable();
+    pthread_t threadId;
+    pthread_create(&threadId, NULL,updateToDb,NULL);
 	for (int i = 0; i < thread_handling; ++i)
 	{
 		/* code */

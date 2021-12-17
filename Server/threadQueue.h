@@ -2,6 +2,7 @@
 #define THREADQUEUE_H_
 #define LOCATION_MAX 5000
 #define SENSOR_MAX 50
+#define INTERVAL_UPDATE 10
 
 struct Node {
 	int* confd;

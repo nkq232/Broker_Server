@@ -608,5 +608,35 @@ int getTypeByUser(int type[], int*len, int userID, const char* locationID) {
     return 1;
 }
 
+int insertValue(const int locationID, const int typeID, const char *value) {
+    MYSQL *con = mysql_init(NULL);
+
+    if (con == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    if (mysql_real_connect(con, "localhost", "weather_server", "12345678",
+                           "Weather", 0, NULL, 0) == NULL)
+    {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+
+
+    char test_query[10001];
+    snprintf(test_query,sizeof(test_query), "INSERT INTO `Data` (`DataId`, `LocationId`, `TypeId`, `Value`) VALUES (NULL, \'%d\', \'%d\', \'%s\');", locationID, typeID, value);
+
+    if(mysql_query(con, test_query)) {
+        fprintf(stderr, "%s\n", mysql_error(con));
+        return -1;
+    }
+
+    mysql_close(con);
+    return 1;
+}
+
 
 
